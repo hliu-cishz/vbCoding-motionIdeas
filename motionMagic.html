@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Coding Motion Inspiration Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        paper: {
+                            bg: '#F6F5F0',
+                            surface: '#FAF9F6',
+                            well: '#EFECE4',
+                            border: '#E4E1D8',
+                            ink: '#1A1917',
+                            muted: '#6E6C65',
+                            subtle: '#9C9990',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-canvas: #F6F5F0;
+            --bg-surface: #FAF9F6;
+            --bg-well: #EFECE4;
+            --border-hairline: #E4E1D8;
+            --text-ink: #1A1917;
+            --text-muted: #6E6C65;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-ink);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #D5D1C6; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #B8B3A6; }
+
+        /* Minimalist simulated browser frame */
+        .browser-window {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-hairline);
+            border-radius: 1.25rem;
+            box-shadow: 0 12px 36px -12px rgba(26, 25, 23, 0.06), 0 2px 6px -1px rgba(26, 25, 23, 0.03);
+            overflow: hidden;
+        }
+
+        .browser-topbar {
+            height: 36px;
+            background: #F2F0E9;
+            border-bottom: 1px solid var(--border-hairline);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 7px;
+        }
+
+        .browser-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 9999px;
+            background: #D8D4C9;
+        }
+
+        /* Real-time parameter control bar */
+        .param-bar {
+            background: #F2F0E9;
+            border-top: 1px solid var(--border-hairline);
+            padding: 12px 18px;
+        }
+
+        /* Custom Apple-style range slider */
+        input[type="range"].apple-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: #DCD8CD;
+            border-radius: 999px;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"].apple-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #1A1917;
+            border: 2px solid #FAF9F6;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        input[type="range"].apple-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Copy button micro-interaction with spring bounce & floating badge */
+        .copy-btn {
+            position: relative;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .copy-btn:active {
+            transform: scale(0.92);
+        }
+        .copy-btn.copied-state {
+            background-color: #166534 !important;
+            border-color: #166534 !important;
+            color: #FAF9F6 !important;
+            transform: scale(1.05);
+            box-shadow: 0 6px 18px -4px rgba(22, 101, 52, 0.35);
+        }
+        @keyframes checkDraw {
+            0% { stroke-dashoffset: 24; opacity: 0; transform: scale(0.5); }
+            100% { stroke-dashoffset: 0; opacity: 1; transform: scale(1); }
+        }
+        .check-path-anim {
+            stroke-dasharray: 24;
+            stroke-dashoffset: 0;
+            animation: checkDraw 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes copiedPopUp {
+            0% { opacity: 0; transform: translate(-50%, 6px) scale(0.85); }
+            22% { opacity: 1; transform: translate(-50%, -6px) scale(1.03); }
+            80% { opacity: 1; transform: translate(-50%, -8px) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -14px) scale(0.95); }
+        }
+        .copied-float-pill {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 4px;
+            background: #1A1917;
+            color: #FAF9F6;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 999px;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(26, 25, 23, 0.2);
+            animation: copiedPopUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Modal transitions */
+        @keyframes modalPopIn {
+            0% { opacity: 0; transform: scale(0.96) translateY(8px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-card-enter {
+            animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* =========================================================
+           01. Hover Lift
+        ========================================================== */
+        #card-01-demo {
+            --lift-y: -16px;
+            --lift-dur: 0.35s;
+            --shadow-alpha: 0.16;
+            --shadow-blur: 32px;
+            transition: transform var(--lift-dur) cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow var(--lift-dur) cubic-bezier(0.16, 1, 0.3, 1),
+                        border-color var(--lift-dur) ease;
+        }
+        #card-01-demo:hover {
+            transform: translateY(var(--lift-y));
+            box-shadow: 0 calc(var(--lift-y) * -1.1) var(--shadow-blur) -4px rgba(26, 25, 23, var(--shadow-alpha));
+            border-color: #1A1917;
+        }
+
+        /* =========================================================
+           03. Fan Out (Bottom-centre pivot + lateral spread)
+        ========================================================== */
+        #fan-stage-03 {
+            --fan-angle: 18deg;
+            --fan-spread: 112px;
+            --fan-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #fan-stage-03 .fan-card {
+            transform-origin: 50% 100%;
+            transition: transform 0.5s var(--fan-ease), box-shadow 0.4s ease;
+        }
+        #fan-stage-03 .fan-left {
+            transform: translateX(-10px) rotate(-4deg);
+        }
+        #fan-stage-03 .fan-right {
+            transform: translateX(10px) rotate(4deg);
+        }
+        #fan-stage-03 .fan-center {
+            transform: translateY(0px) scale(1);
+        }
+        #fan-stage-03:hover .fan-left,
+        #fan-stage-03.is-fanned .fan-left {
+            transform: translateX(calc(var(--fan-spread) * -1)) translateY(6px) rotate(calc(var(--fan-angle) * -1));
+            box-shadow: 0 14px 28px -8px rgba(26, 25, 23, 0.14);
+        }
+        #fan-stage-03:hover .fan-right,
+        #fan-stage-03.is-fanned .fan-right {
+            transform: translateX(var(--fan-spread)) translateY(6px) rotate(var(--fan-angle));
+            box-shadow: 0 14px 28px -8px rgba(26, 25, 23, 0.14);
+        }
+        #fan-stage-03:hover .fan-center,
+        #fan-stage-03.is-fanned .fan-center {
+            transform: translateY(-14px) scale(1.04);
+            box-shadow: 0 22px 38px -10px rgba(26, 25, 23, 0.28);
+        }
+
+        /* =========================================================
+           04. Image Zoom
+        ========================================================== */
+        #zoom-card-04 {
+            --zoom-scale: 1.22;
+            --zoom-dur: 0.65s;
+        }
+        #zoom-card-04 .zoom-target {
+            transition: transform var(--zoom-dur) cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #zoom-card-04:hover .zoom-target {
+            transform: scale(var(--zoom-scale));
+        }
+
+        /* =========================================================
+           07. Info Slide-Up
+        ========================================================== */
+        #slideup-card-07 {
+            --slide-dur: 0.4s;
+            --mask-alpha: 0.85;
+        }
+        #slideup-card-07 .slide-panel {
+            background: linear-gradient(to top, rgba(26, 25, 23, var(--mask-alpha)) 0%, rgba(26, 25, 23, calc(var(--mask-alpha) * 0.7)) 65%, transparent 100%);
+            transform: translateY(100%);
+            transition: transform var(--slide-dur) cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #slideup-card-07:hover .slide-panel {
+            transform: translateY(0%);
+        }
+        #slideup-card-07 .slide-bg {
+            transition: transform var(--slide-dur) ease, filter var(--slide-dur) ease;
+        }
+        #slideup-card-07:hover .slide-bg {
+            transform: scale(1.06);
+            filter: brightness(0.8);
+        }
+
+        /* =========================================================
+           10. Focus Dim
+        ========================================================== */
+        #focus-grid-10 {
+            --dim-opacity: 0.32;
+            --dim-scale: 0.92;
+        }
+        #focus-grid-10 .focus-card {
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #focus-grid-10:hover .focus-card {
+            opacity: var(--dim-opacity);
+            transform: scale(var(--dim-scale));
+        }
+        #focus-grid-10 .focus-card:hover {
+            opacity: 1 !important;
+            transform: scale(1.04) !important;
+            border-color: #1A1917;
+            box-shadow: 0 12px 24px -8px rgba(26, 25, 23, 0.12);
+            z-index: 10;
+        }
+
+        /* =========================================================
+           11. Proximity Spotlight Border Glow
+        ========================================================== */
+        #spotlight-grid-11 {
+            --spot-radius: 200px;
+            --spot-rgb: 217, 119, 6;
+            --spot-intensity: 0.75;
+        }
+        .spot-card {
+            position: relative;
+            background: #E4E1D8;
+            border-radius: 1rem;
+            padding: 1.5px;
+            overflow: hidden;
+            transition: transform 0.25s ease;
+        }
+        .spot-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                var(--spot-radius) circle at var(--mx, -999px) var(--my, -999px),
+                rgba(var(--spot-rgb), var(--spot-intensity)),
+                transparent 75%
+            );
+            z-index: 0;
+            pointer-events: none;
+        }
+        .spot-card-inner {
+            position: relative;
+            z-index: 1;
+            background: #FAF9F6;
+            border-radius: calc(1rem - 1.5px);
+            height: 100%;
+            overflow: hidden;
+        }
+        .spot-card-inner::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                calc(var(--spot-radius) * 1.15) circle at var(--mx, -999px) var(--my, -999px),
+                rgba(var(--spot-rgb), calc(var(--spot-intensity) * 0.16)),
+                transparent 70%
+            );
+            pointer-events: none;
+        }
+
+        /* =========================================================
+           12. 3D Card Flip
+        ========================================================== */
+        #flip3d-stage-12 {
+            perspective: 900px;
+            --flip-dur: 0.7s;
+        }
+        #flip3d-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform var(--flip-dur) cubic-bezier(0.34, 1.36, 0.64, 1);
+        }
+        #flip3d-stage-12.axis-y:hover #flip3d-inner,
+        #flip3d-stage-12.axis-y.is-flipped #flip3d-inner {
+            transform: rotateY(180deg);
+        }
+        #flip3d-stage-12.axis-x:hover #flip3d-inner,
+        #flip3d-stage-12.axis-x.is-flipped #flip3d-inner {
+            transform: rotateX(180deg);
+        }
+        .flip3d-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 1rem;
+        }
+        .flip3d-back-y {
+            transform: rotateY(180deg);
+        }
+        .flip3d-back-x {
+            transform: rotateX(180deg);
+        }
+
+        /* =========================================================
+           13. 3D Coverflow Carousel
+        ========================================================== */
+        .coverflow-scene {
+            perspective: 1100px;
+        }
+        .coverflow-item {
+            position: absolute;
+            width: 168px;
+            height: 210px;
+            left: 50%;
+            top: 50%;
+            margin-left: -84px;
+            margin-top: -105px;
+            will-change: transform, opacity;
+            transform-style: preserve-3d;
+        }
+
+        /* =========================================================
+           14. Pricing Toggle Roller
+        ========================================================== */
+        #pricing-stage-14 {
+            --roll-dur: 0.45s;
+            --pro-scale: 1.06;
+        }
+        .price-roller-window {
+            height: 2.5rem;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: bottom;
+        }
+        .price-roller-strip {
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--roll-dur) cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .price-roller-strip span {
+            height: 2.5rem;
+            line-height: 2.5rem;
+            display: block;
+        }
+        #pro-card-14 {
+            transform: scale(var(--pro-scale));
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* =========================================================
+           15. Staggered Character Reveal
+        ========================================================== */
+        .stagger-char {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(var(--stagger-y, 32px));
+            filter: blur(8px);
+            transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                        filter 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .stagger-char.active {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0px);
+        }
+
+        /* =========================================================
+           19. Tactile Press & Ripple
+        ========================================================== */
+        @keyframes rippleExpand {
+            to {
+                transform: scale(4.2);
+                opacity: 0;
+            }
+        }
+        .ripple-wave {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(250, 249, 246, 0.42);
+            transform: scale(0);
+            animation: rippleExpand 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="selection:bg-[#1A1917] selection:text-[#FAF9F6]">
+
+    <!-- =========================================================
+         Minimalist Frosted Navigation Bar (Three Tabs Only)
+    ========================================================== -->
+    <header class="sticky top-0 z-40 bg-[#F6F5F0]/85 backdrop-blur-xl border-b border-[#E4E1D8]">
+        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-center">
+            <nav class="inline-flex items-center bg-[#EBE8DF] p-1 rounded-full border border-[#DFDBD0] relative" role="tablist">
+                <div id="nav-pill" class="absolute top-1 bottom-1 left-1 rounded-full bg-[#1A1917] shadow-sm transition-all duration-300 ease-out pointer-events-none"></div>
+                <button onclick="switchTab('cards', this)" data-tab="cards" class="nav-btn relative z-10 px-5 sm:px-7 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-[#FAF9F6] transition-colors cursor-pointer">
+                    Cards &amp; Previews
+                </button>
+                <button onclick="switchTab('typography', this)" data-tab="typography" class="nav-btn relative z-10 px-5 sm:px-7 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-[#6E6C65] hover:text-[#1A1917] transition-colors cursor-pointer">
+                    Typography Motion
+                </button>
+                <button onclick="switchTab('feedback', this)" data-tab="feedback" class="nav-btn relative z-10 px-5 sm:px-7 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-[#6E6C65] hover:text-[#1A1917] transition-colors cursor-pointer">
+                    Feedback Motion
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- =========================================================
+         Main Interactive Specimens Gallery
+    ========================================================== -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pb-28">
+
+        <!-- =====================================================
+             TAB 1: Cards & Previews (14 Specimens)
+        ====================================================== -->
+        <section id="panel-cards" class="tab-panel space-y-16">
+
+            <!-- 01. Hover Lift -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">01 Hover Lift</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">On hover, the card elevates smoothly along the Y-axis whilst ambient shadows deepen to establish Z-axis hierarchy.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('01')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '01')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <div id="card-01-demo" class="w-full max-w-xs p-6 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] cursor-pointer select-none">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="w-9 h-9 rounded-xl bg-[#EFECE4] flex items-center justify-center text-[#1A1917] font-mono text-sm font-bold">↑</span>
+                                <span class="text-[11px] font-mono text-[#9C9990]">ELEVATION</span>
+                            </div>
+                            <div class="text-base font-bold text-[#1A1917]">Hover for Spatial Elevation</div>
+                            <p class="text-xs text-[#6E6C65] mt-1.5 leading-relaxed">Adjust the lift distance and shadow spread below to observe physical weight lifting off the surface.</p>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Lift Distance</span><span id="val-01-y" class="text-[#1A1917] font-semibold">16px</span></div>
+                            <input type="range" min="4" max="48" value="16" class="apple-slider" oninput="updateCase01(this.value, null, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Duration</span><span id="val-01-dur" class="text-[#1A1917] font-semibold">0.35s</span></div>
+                            <input type="range" min="0.08" max="1.5" step="0.02" value="0.35" class="apple-slider" oninput="updateCase01(null, this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Shadow Intensity</span><span id="val-01-shd" class="text-[#1A1917] font-semibold">45%</span></div>
+                            <input type="range" min="10" max="100" value="45" class="apple-slider" oninput="updateCase01(null, null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 02. Hover Play -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">02 Hover Play</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Hovering fades out the static cover thumbnail, starts muted motion playback, and reveals a live progress bar at the bottom.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('02')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '02')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <div id="hover-play-card-02" class="w-full max-w-md h-full rounded-2xl bg-[#1A1917] border border-[#E4E1D8] relative overflow-hidden cursor-pointer group select-none shadow-sm">
+                            <canvas id="canvas-02" class="w-full h-full block"></canvas>
+                            <div id="cover-02" style="transition-duration: 0.35s;" class="absolute inset-0 bg-[#FAF9F6] flex flex-col items-center justify-center transition-opacity group-hover:opacity-0">
+                                <div class="w-12 h-12 rounded-full bg-[#1A1917] text-[#FAF9F6] flex items-center justify-center mb-2.5 shadow-md">
+                                    <svg class="w-5 h-5 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                                <span class="text-sm font-bold text-[#1A1917]">Hover to Preview Motion Stream</span>
+                                <span class="text-[11px] font-mono text-[#6E6C65] mt-0.5">HOVER TO PLAY STREAM</span>
+                            </div>
+                            <div class="absolute bottom-0 inset-x-0 h-1.5 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div id="progress-02" class="h-full bg-[#FAF9F6] w-0"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Cover Fade Duration</span><span id="val-02-fade" class="text-[#1A1917] font-semibold">0.35s</span></div>
+                            <input type="range" min="0.05" max="1.2" step="0.05" value="0.35" class="apple-slider" oninput="updateCase02(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Playback Speed</span><span id="val-02-spd" class="text-[#1A1917] font-semibold">1.2x</span></div>
+                            <input type="range" min="0.3" max="3.5" step="0.1" value="1.2" class="apple-slider" oninput="updateCase02(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 03. Fan Out -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">03 Fan Out</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Three stacked cards pivot outward from their bottom-centre anchor with symmetric rotation and horizontal spread, revealing each layer clearly.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('03')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '03')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div id="fan-stage-03" onclick="this.classList.toggle('is-fanned')" class="h-72 bg-[#EFECE4]/55 flex items-center justify-center relative overflow-hidden cursor-pointer select-none">
+                        <div class="fan-card fan-left absolute w-36 h-44 rounded-2xl bg-[#E8E4D8] border border-[#D4CFC0] p-4 flex flex-col justify-between shadow-md">
+                            <span class="text-[10px] font-mono text-[#6E6C65]">01 / LAYER</span>
+                            <div>
+                                <div class="text-sm font-bold text-[#1A1917]">Wireframe</div>
+                                <div class="text-[10px] font-mono text-[#6E6C65] mt-0.5">LEFT PIVOT</div>
+                            </div>
+                        </div>
+                        <div class="fan-card fan-right absolute w-36 h-44 rounded-2xl bg-[#DCD7C9] border border-[#C7C1B0] p-4 flex flex-col justify-between shadow-md">
+                            <span class="text-[10px] font-mono text-[#6E6C65]">03 / LAYER</span>
+                            <div>
+                                <div class="text-sm font-bold text-[#1A1917]">Delivery</div>
+                                <div class="text-[10px] font-mono text-[#6E6C65] mt-0.5">RIGHT PIVOT</div>
+                            </div>
+                        </div>
+                        <div class="fan-card fan-center relative z-10 w-36 h-44 rounded-2xl bg-[#1A1917] text-[#FAF9F6] p-4 flex flex-col justify-between shadow-xl">
+                            <span class="text-[10px] font-mono text-[#9C9990]">02 / CORE</span>
+                            <div>
+                                <div class="text-sm font-bold">Hover or Click to Fan</div>
+                                <div class="text-[10px] font-mono text-[#9C9990] mt-1">bottom centre</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Fan Angle &amp; Spread</span><span id="val-03-deg" class="text-[#1A1917] font-semibold">±18°</span></div>
+                            <input type="range" min="8" max="36" value="18" class="apple-slider" oninput="updateCase03(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Spring Overshoot</span><span id="val-03-bounce" class="text-[#1A1917] font-semibold">0.56</span></div>
+                            <input type="range" min="0.1" max="0.95" step="0.05" value="0.56" class="apple-slider" oninput="updateCase03(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 04. Image Zoom -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">04 Image Zoom</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">The image frame clips overflow cleanly whilst the artwork inside smoothly scales up on hover.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('04')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '04')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <div id="zoom-card-04" class="w-full max-w-sm rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] overflow-hidden cursor-pointer shadow-sm">
+                            <div class="h-36 overflow-hidden relative bg-[#E6E2D6]">
+                                <div class="zoom-target w-full h-full flex items-center justify-center relative">
+                                    <svg class="w-full h-full" viewBox="0 0 400 180" fill="none">
+                                        <rect width="400" height="180" fill="#EAE6DA"/>
+                                        <circle cx="130" cy="95" r="56" fill="#1A1917"/>
+                                        <circle cx="245" cy="75" r="42" stroke="#1A1917" stroke-width="2.5"/>
+                                        <path d="M60 155 L200 45 L340 155 Z" fill="#D5CFC0" fill-opacity="0.7"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="p-4 flex items-center justify-between">
+                                <span class="text-sm font-bold text-[#1A1917]">Bauhaus Geometric Study</span>
+                                <span class="text-xs font-mono text-[#6E6C65]">OVERFLOW HIDDEN</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Zoom Scale</span><span id="val-04-scale" class="text-[#1A1917] font-semibold">1.22x</span></div>
+                            <input type="range" min="1.05" max="1.65" step="0.03" value="1.22" class="apple-slider" oninput="updateCase04(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Zoom Duration</span><span id="val-04-dur" class="text-[#1A1917] font-semibold">0.65s</span></div>
+                            <input type="range" min="0.15" max="2.0" step="0.05" value="0.65" class="apple-slider" oninput="updateCase04(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 05. Scrub Preview -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">05 Scrub Preview</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Move your cursor horizontally across the card to scrub through preview frames whilst segmented top indicators track your position.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('05')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '05')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <div id="scrub-card-05" class="w-full max-w-md h-full rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-ew-resize select-none relative overflow-hidden">
+                            <div id="scrub-bars-05" class="flex gap-1.5 relative z-10"></div>
+                            <div class="my-auto text-center">
+                                <div id="scrub-badge-05" class="inline-block px-3 py-1 rounded-full bg-[#1A1917] text-[#FAF9F6] font-mono text-xs mb-2">FRAME 01</div>
+                                <div id="scrub-title-05" class="text-lg font-extrabold text-[#1A1917]">Wireframe &amp; Architecture</div>
+                                <div class="text-xs text-[#6E6C65] mt-1">Move cursor left or right across this card to scrub frames</div>
+                            </div>
+                            <div class="flex justify-between text-[11px] font-mono text-[#9C9990]">
+                                <span>SCRUBBING X</span>
+                                <span id="scrub-stat-05">1 / 6</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Preview Frames</span><span id="val-05-frames" class="text-[#1A1917] font-semibold">6 frames</span></div>
+                            <input type="range" min="3" max="12" value="6" class="apple-slider" oninput="updateCase05(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Indicator Bar Height</span><span id="val-05-h" class="text-[#1A1917] font-semibold">4px</span></div>
+                            <input type="range" min="2" max="10" value="4" class="apple-slider" oninput="updateCase05(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 06. Grid Switch -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">06 Grid Switch</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Toggle between multi-column grid and single-column list layouts with smooth FLIP spatial interpolation.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('06')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '06')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 p-5 flex flex-col">
+                        <div class="flex items-center justify-between mb-3">
+                            <span id="layout-label-06" class="text-xs font-mono text-[#6E6C65]">LAYOUT: GRID</span>
+                            <div class="inline-flex bg-[#E4E1D8] p-0.5 rounded-lg">
+                                <button id="btn-grid-06" onclick="toggleGrid06('grid')" class="px-2.5 py-1 rounded-md bg-[#1A1917] text-[#FAF9F6] text-xs font-medium cursor-pointer">Grid</button>
+                                <button id="btn-list-06" onclick="toggleGrid06('list')" class="px-2.5 py-1 rounded-md text-[#6E6C65] text-xs font-medium cursor-pointer">List</button>
+                            </div>
+                        </div>
+                        <div id="grid-container-06" class="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+                            <div class="grid-item-06 bg-[#FAF9F6] border border-[#E4E1D8] p-3.5 flex flex-col justify-between" style="border-radius: 16px;">
+                                <span class="text-[11px] font-mono text-[#9C9990]">01</span>
+                                <span class="text-xs font-bold text-[#1A1917]">Colour Tokens</span>
+                            </div>
+                            <div class="grid-item-06 bg-[#FAF9F6] border border-[#E4E1D8] p-3.5 flex flex-col justify-between" style="border-radius: 16px;">
+                                <span class="text-[11px] font-mono text-[#9C9990]">02</span>
+                                <span class="text-xs font-bold text-[#1A1917]">Typography</span>
+                            </div>
+                            <div class="grid-item-06 bg-[#FAF9F6] border border-[#E4E1D8] p-3.5 flex flex-col justify-between" style="border-radius: 16px;">
+                                <span class="text-[11px] font-mono text-[#9C9990]">03</span>
+                                <span class="text-xs font-bold text-[#1A1917]">Spatial Grid</span>
+                            </div>
+                            <div class="grid-item-06 bg-[#FAF9F6] border border-[#E4E1D8] p-3.5 flex flex-col justify-between" style="border-radius: 16px;">
+                                <span class="text-[11px] font-mono text-[#9C9990]">04</span>
+                                <span class="text-xs font-bold text-[#1A1917]">Easing Curves</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Reflow Duration</span><span id="val-06-dur" class="text-[#1A1917] font-semibold">0.45s</span></div>
+                            <input type="range" min="0.15" max="1.4" step="0.05" value="0.45" class="apple-slider" oninput="updateCase06(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Corner Radius</span><span id="val-06-rad" class="text-[#1A1917] font-semibold">16px</span></div>
+                            <input type="range" min="0" max="36" value="16" class="apple-slider" oninput="updateCase06(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 07. Info Slide-Up -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">07 Info Slide-Up</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Keeps the surface clean at rest; on hover, a bottom detail drawer glides upward over a darkening gradient scrim.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('07')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '07')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <div id="slideup-card-07" class="w-full max-w-sm h-full rounded-2xl border border-[#E4E1D8] relative overflow-hidden cursor-pointer select-none">
+                            <div class="slide-bg w-full h-full bg-[#E5E0D3] p-5 flex flex-col justify-between">
+                                <span class="self-start px-2.5 py-0.5 rounded-full bg-[#FAF9F6]/80 text-[10px] font-mono text-[#1A1917]">EXHIBITION</span>
+                                <div class="text-base font-bold text-[#1A1917]">Hover to Reveal Bottom Details ↑</div>
+                            </div>
+                            <div class="slide-panel absolute inset-x-0 bottom-0 p-5 pt-10 text-[#FAF9F6]">
+                                <div class="text-base font-bold">Minimalist Industrial Design Annual</div>
+                                <p class="text-xs text-[#E4E1D8] mt-1 leading-relaxed">Restrained neutral tones paired with calibrated easing curves reveal context only when requested.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Slide-Up Duration</span><span id="val-07-dur" class="text-[#1A1917] font-semibold">0.40s</span></div>
+                            <input type="range" min="0.1" max="1.2" step="0.05" value="0.40" class="apple-slider" oninput="updateCase07(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Scrim Opacity</span><span id="val-07-alpha" class="text-[#1A1917] font-semibold">85%</span></div>
+                            <input type="range" min="20" max="98" value="85" class="apple-slider" oninput="updateCase07(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 08. Card Expand -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">08 Card Expand</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Click the card to expand seamlessly from its origin coordinates into a full detail view using FLIP shared-element transitions.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('08')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '08')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div id="stage-08" class="h-64 bg-[#EFECE4]/55 relative flex items-center justify-center p-6 overflow-hidden">
+                        <div id="flip-src-08" onclick="openFlip08()" class="w-full max-w-xs p-5 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] hover:border-[#1A1917] cursor-pointer transition-colors shadow-sm">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-[11px] font-mono text-[#6E6C65]">SHARED ELEMENT</span>
+                                <span class="text-xs font-bold text-[#1A1917]">↗</span>
+                            </div>
+                            <div class="text-base font-bold text-[#1A1917]">Click to Expand Full Detail</div>
+                            <p class="text-xs text-[#6E6C65] mt-1">Experience continuous spatial transition from origin</p>
+                        </div>
+
+                        <div id="flip-backdrop-08" class="absolute inset-0 bg-[#1A1917]/20 hidden items-center justify-center p-4 z-20" style="backdrop-filter: blur(8px);">
+                            <div id="flip-dest-08" class="w-full h-full rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-6 flex flex-col justify-between shadow-xl">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <span class="text-[11px] font-mono text-[#6E6C65]">FLIP EXPANDED VIEW</span>
+                                        <h3 class="text-xl font-extrabold text-[#1A1917] mt-0.5">Shared-Element Spatial Transition</h3>
+                                    </div>
+                                    <button onclick="closeFlip08()" class="w-8 h-8 rounded-full bg-[#EFECE4] hover:bg-[#1A1917] hover:text-[#FAF9F6] text-[#1A1917] flex items-center justify-center text-xs font-bold transition cursor-pointer">✕</button>
+                                </div>
+                                <p class="text-xs sm:text-sm text-[#6E6C65] leading-relaxed">
+                                    By capturing the card's initial <code class="font-mono text-[#1A1917]">getBoundingClientRect()</code> and inverting its delta transform on the target container, page transitions feel physically continuous.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Expand Duration</span><span id="val-08-dur" class="text-[#1A1917] font-semibold">0.45s</span></div>
+                            <input type="range" min="0.2" max="1.4" step="0.05" value="0.45" class="apple-slider" oninput="updateCase08(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Backdrop Blur</span><span id="val-08-blur" class="text-[#1A1917] font-semibold">8px</span></div>
+                            <input type="range" min="0" max="24" value="8" class="apple-slider" oninput="updateCase08(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 09. Drag Reorder -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">09 Drag Reorder</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Press and drag any card to lift it with a deeper shadow whilst neighbouring cards slide smoothly to make room.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('09')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '09')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex flex-col items-center justify-center p-6">
+                        <div id="sort-grid-09" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 w-full max-w-2xl select-none">
+                            <div class="sort-card-09 h-28 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-grab active:cursor-grabbing">
+                                <span class="text-xs font-mono text-[#9C9990]">01</span>
+                                <span class="text-sm font-bold text-[#1A1917]">Concept Sketch</span>
+                            </div>
+                            <div class="sort-card-09 h-28 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-grab active:cursor-grabbing">
+                                <span class="text-xs font-mono text-[#9C9990]">02</span>
+                                <span class="text-sm font-bold text-[#1A1917]">Motion Params</span>
+                            </div>
+                            <div class="sort-card-09 h-28 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-grab active:cursor-grabbing">
+                                <span class="text-xs font-mono text-[#9C9990]">03</span>
+                                <span class="text-sm font-bold text-[#1A1917]">User Testing</span>
+                            </div>
+                            <div class="sort-card-09 h-28 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-grab active:cursor-grabbing">
+                                <span class="text-xs font-mono text-[#9C9990]">04</span>
+                                <span class="text-sm font-bold text-[#1A1917]">Live Release</span>
+                            </div>
+                        </div>
+                        <span class="text-[11px] font-mono text-[#6E6C65] mt-4">Press and drag any card over another slot to swap positions live</span>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Grab Scale</span><span id="val-09-scale" class="text-[#1A1917] font-semibold">1.08x</span></div>
+                            <input type="range" min="1.03" max="1.25" step="0.01" value="1.08" class="apple-slider" oninput="updateCase09(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Shift Duration</span><span id="val-09-dur" class="text-[#1A1917] font-semibold">0.28s</span></div>
+                            <input type="range" min="0.1" max="0.8" step="0.02" value="0.28" class="apple-slider" oninput="updateCase09(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 10. Focus Dim -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">10 Focus Dim</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Hovering over a single card keeps it crisp and prominent whilst sibling cards dim and subtly recede.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('10')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '10')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <div id="focus-grid-10" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 w-full max-w-2xl select-none">
+                            <div class="focus-card h-32 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-pointer">
+                                <span class="text-xs font-mono text-[#9C9990]">A</span>
+                                <span class="text-sm font-bold text-[#1A1917]">Visual Focus</span>
+                            </div>
+                            <div class="focus-card h-32 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-pointer">
+                                <span class="text-xs font-mono text-[#9C9990]">B</span>
+                                <span class="text-sm font-bold text-[#1A1917]">Depth Contrast</span>
+                            </div>
+                            <div class="focus-card h-32 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-pointer">
+                                <span class="text-xs font-mono text-[#9C9990]">C</span>
+                                <span class="text-sm font-bold text-[#1A1917]">Whitespace</span>
+                            </div>
+                            <div class="focus-card h-32 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] p-4 flex flex-col justify-between cursor-pointer">
+                                <span class="text-xs font-mono text-[#9C9990]">D</span>
+                                <span class="text-sm font-bold text-[#1A1917]">Hierarchy</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Sibling Opacity</span><span id="val-10-op" class="text-[#1A1917] font-semibold">0.32</span></div>
+                            <input type="range" min="0.1" max="0.85" step="0.02" value="0.32" class="apple-slider" oninput="updateCase10(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Sibling Scale</span><span id="val-10-sc" class="text-[#1A1917] font-semibold">0.92</span></div>
+                            <input type="range" min="0.80" max="0.99" step="0.01" value="0.92" class="apple-slider" oninput="updateCase10(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 11. Proximity Spotlight Border Glow -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">11 Spotlight Border Glow</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Maps live cursor coordinates to local CSS variables so resting your pointer in the gap between two cards illuminates both borders simultaneously.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('11')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '11')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div id="spotlight-arena-11" class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <div id="spotlight-grid-11" class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl select-none">
+                            <div class="spot-card h-36 cursor-pointer">
+                                <div class="spot-card-inner p-4 flex flex-col justify-between">
+                                    <span class="text-[11px] font-mono text-[#9C9990]">PROXIMITY 01</span>
+                                    <div>
+                                        <div class="text-sm font-bold text-[#1A1917]">Edge Ray-Tracking</div>
+                                        <div class="text-[11px] text-[#6E6C65] mt-0.5">Hover in the gap between cards</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="spot-card h-36 cursor-pointer">
+                                <div class="spot-card-inner p-4 flex flex-col justify-between">
+                                    <span class="text-[11px] font-mono text-[#9C9990]">PROXIMITY 02</span>
+                                    <div>
+                                        <div class="text-sm font-bold text-[#1A1917]">Dual-Border Sync</div>
+                                        <div class="text-[11px] text-[#6E6C65] mt-0.5">Radial glow bleeds across 1.5px border</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="spot-card h-36 cursor-pointer">
+                                <div class="spot-card-inner p-4 flex flex-col justify-between">
+                                    <span class="text-[11px] font-mono text-[#9C9990]">PROXIMITY 03</span>
+                                    <div>
+                                        <div class="text-sm font-bold text-[#1A1917]">Surface Diffusion</div>
+                                        <div class="text-[11px] text-[#6E6C65] mt-0.5">Zero-reflow CSS variable driven</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Glow Colour</span><span id="val-11-color" class="text-[#1A1917] font-semibold">#D97706</span></div>
+                            <div class="flex items-center gap-2">
+                                <label class="relative w-6 h-6 rounded-lg overflow-hidden border border-[#CFCBC0] shadow-xs cursor-pointer shrink-0" title="Open colour picker">
+                                    <input type="color" id="picker-11" value="#D97706" oninput="onColorPicker11(this.value)" class="absolute -inset-2 w-10 h-10 cursor-pointer border-0 p-0 bg-transparent">
+                                </label>
+                                <input type="text" id="hex-input-11" value="#D97706" maxlength="7" spellcheck="false" oninput="onHexInput11(this.value)" onblur="onHexBlur11(this)" placeholder="#D97706" class="w-full max-w-[104px] px-2.5 py-1 rounded-lg bg-[#FAF9F6] border border-[#DCD8CD] focus:border-[#1A1917] outline-none font-mono text-xs text-[#1A1917] uppercase">
+                            </div>
+                        </div>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Glow Radius</span><span id="val-11-rad" class="text-[#1A1917] font-semibold">200px</span></div>
+                            <input type="range" min="80" max="360" value="200" class="apple-slider" oninput="updateCase11(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Glow Intensity</span><span id="val-11-int" class="text-[#1A1917] font-semibold">75%</span></div>
+                            <input type="range" min="20" max="100" value="75" class="apple-slider" oninput="updateCase11(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 12. 3D Card Flip -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">12 Card Flip</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Uses <code class="font-mono text-[#1A1917]">preserve-3d</code> and <code class="font-mono text-[#1A1917]">backface-visibility: hidden</code> to rotate a two-sided physical card smoothly on hover or click.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('12')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '12')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <div id="flip3d-stage-12" onclick="this.classList.toggle('is-flipped')" class="axis-y w-full max-w-xs h-44 cursor-pointer select-none">
+                            <div id="flip3d-inner">
+                                <div class="flip3d-face bg-[#FAF9F6] border border-[#E4E1D8] p-5 flex flex-col justify-between shadow-sm">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[11px] font-mono text-[#9C9990]">FRONT FACE</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-[#EFECE4] text-[10px] font-mono text-[#1A1917]">↻ HOVER</span>
+                                    </div>
+                                    <div>
+                                        <div class="text-lg font-extrabold text-[#1A1917]">Hover to Flip Reverse Side</div>
+                                        <p class="text-xs text-[#6E6C65] mt-1">Supports horizontal Y-axis and vertical X-axis rotation</p>
+                                    </div>
+                                </div>
+                                <div id="flip3d-back-face" class="flip3d-face flip3d-back-y bg-[#1A1917] text-[#FAF9F6] p-5 flex flex-col justify-between shadow-lg">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[11px] font-mono text-[#9C9990]">BACK SPECIFICATION</span>
+                                        <span class="text-xs font-mono text-[#FAF9F6]">180°</span>
+                                    </div>
+                                    <div class="space-y-1 text-xs">
+                                        <div class="font-bold text-sm">Reverse Specification Archive</div>
+                                        <p class="text-[#9C9990] leading-relaxed">Ideal for membership passes, product spec comparisons, and interactive revision flashcards.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Flip Axis</span><span id="val-12-axis" class="text-[#1A1917] font-semibold">Horizontal Y</span></div>
+                            <div class="inline-flex bg-[#E4E1D8] p-0.5 rounded-lg self-start">
+                                <button id="btn-axis-y" onclick="setFlipAxis12('y')" class="px-2.5 py-0.5 rounded bg-[#1A1917] text-[#FAF9F6] text-[11px] cursor-pointer">Y-Axis</button>
+                                <button id="btn-axis-x" onclick="setFlipAxis12('x')" class="px-2.5 py-0.5 rounded text-[#6E6C65] text-[11px] cursor-pointer">X-Axis</button>
+                            </div>
+                        </div>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Flip Duration</span><span id="val-12-dur" class="text-[#1A1917] font-semibold">0.70s</span></div>
+                            <input type="range" min="0.25" max="1.6" step="0.05" value="0.70" class="apple-slider" oninput="updateCase12(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Perspective Depth</span><span id="val-12-persp" class="text-[#1A1917] font-semibold">900px</span></div>
+                            <input type="range" min="400" max="1600" step="50" value="900" class="apple-slider" oninput="updateCase12(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 13. Coverflow Carousel -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">13 Coverflow Carousel</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">The active centre card faces forward whilst flanking cards rotate around the Y-axis and recede into Z-depth with continuous drag sliding.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('13')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '13')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-72 bg-[#EFECE4]/55 flex flex-col justify-between p-4 select-none overflow-hidden">
+                        <div id="coverflow-stage-13" class="coverflow-scene relative flex-1 w-full cursor-grab active:cursor-grabbing touch-pan-y"></div>
+                        <div class="relative z-20 flex items-center justify-center gap-3">
+                            <button onclick="stepCoverflow13(-1)" class="w-8 h-8 rounded-full bg-[#FAF9F6] hover:bg-[#1A1917] hover:text-[#FAF9F6] border border-[#E4E1D8] text-[#1A1917] flex items-center justify-center text-xs transition cursor-pointer">←</button>
+                            <span id="coverflow-idx-13" class="text-xs font-mono text-[#6E6C65] min-w-[54px] text-center">03 / 05</span>
+                            <button onclick="stepCoverflow13(1)" class="w-8 h-8 rounded-full bg-[#FAF9F6] hover:bg-[#1A1917] hover:text-[#FAF9F6] border border-[#E4E1D8] text-[#1A1917] flex items-center justify-center text-xs transition cursor-pointer">→</button>
+                            <button id="auto-slide-btn-13" onclick="toggleAutoSlide13()" class="ml-2 px-3 py-1 rounded-full bg-[#FAF9F6] hover:bg-[#1A1917] hover:text-[#FAF9F6] border border-[#E4E1D8] text-[11px] font-mono text-[#1A1917] transition cursor-pointer">▶ Auto Slide</button>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Side Y-Rotation</span><span id="val-13-deg" class="text-[#1A1917] font-semibold">45°</span></div>
+                            <input type="range" min="15" max="75" value="45" class="apple-slider" oninput="updateCase13(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Recede Z-Depth</span><span id="val-13-z" class="text-[#1A1917] font-semibold">110px</span></div>
+                            <input type="range" min="40" max="260" value="110" class="apple-slider" oninput="updateCase13(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 14. Pricing Toggle -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">14 Pricing Toggle</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Switching between monthly and annual billing rolls price digits vertically like a mechanical counter whilst scaling up the recommended tier.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('14')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '14')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div id="pricing-stage-14" class="h-72 bg-[#EFECE4]/55 p-5 flex flex-col justify-between select-none">
+                        <div class="flex items-center justify-center gap-3">
+                            <span id="lbl-m-14" class="text-xs font-bold text-[#1A1917]">Monthly</span>
+                            <button onclick="toggleBilling14()" class="w-12 h-6 rounded-full bg-[#E4E1D8] p-0.5 relative cursor-pointer">
+                                <div id="dot-14" class="w-5 h-5 rounded-full bg-[#1A1917] transition-transform duration-300"></div>
+                            </button>
+                            <span id="lbl-y-14" class="text-xs font-medium text-[#6E6C65]">Annual (-20%)</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto w-full my-auto items-center">
+                            <div class="p-4 rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8]">
+                                <div class="text-xs font-medium text-[#6E6C65]">Standard</div>
+                                <div class="mt-1.5 flex items-baseline font-extrabold text-[#1A1917]">
+                                    <span class="text-sm mr-0.5">£</span>
+                                    <div class="price-roller-window text-2xl sm:text-3xl font-mono">
+                                        <div id="strip-a-14" class="price-roller-strip"><span>29</span><span>23</span></div>
+                                    </div>
+                                    <span class="text-xs font-normal text-[#6E6C65] ml-1">/mo</span>
+                                </div>
+                            </div>
+                            <div id="pro-card-14" class="p-4 rounded-2xl bg-[#FAF9F6] border-2 border-[#1A1917] shadow-md">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-[#1A1917]">Studio Pro</span>
+                                    <span class="px-2 py-0.5 rounded-full bg-[#1A1917] text-[#FAF9F6] text-[10px] font-mono">POPULAR</span>
+                                </div>
+                                <div class="mt-1.5 flex items-baseline font-extrabold text-[#1A1917]">
+                                    <span class="text-sm mr-0.5">£</span>
+                                    <div class="price-roller-window text-2xl sm:text-3xl font-mono">
+                                        <div id="strip-b-14" class="price-roller-strip"><span>79</span><span>63</span></div>
+                                    </div>
+                                    <span class="text-xs font-normal text-[#6E6C65] ml-1">/mo</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Digit Roll Duration</span><span id="val-14-dur" class="text-[#1A1917] font-semibold">0.45s</span></div>
+                            <input type="range" min="0.15" max="1.2" step="0.05" value="0.45" class="apple-slider" oninput="updateCase14(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Featured Tier Scale</span><span id="val-14-sc" class="text-[#1A1917] font-semibold">1.06x</span></div>
+                            <input type="range" min="1.02" max="1.16" step="0.01" value="1.06" class="apple-slider" oninput="updateCase14(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- =====================================================
+             TAB 2: Typography Motion (3 Specimens)
+        ====================================================== -->
+        <section id="panel-typography" class="tab-panel hidden space-y-16">
+
+            <!-- 15. Staggered Character Reveal -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">15 Staggered Character Reveal</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Splits headlines into individual character spans that rise and de-blur sequentially by a millisecond stagger delay.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('15')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '15')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex flex-col items-center justify-center p-6 text-center">
+                        <div id="stagger-text-15" class="text-2xl sm:text-4xl font-black tracking-tight text-[#1A1917]">
+                            Design in Motion
+                        </div>
+                        <button onclick="playStagger15()" class="mt-6 px-4 py-1.5 rounded-full bg-[#FAF9F6] hover:bg-[#1A1917] hover:text-[#FAF9F6] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">
+                            ↻ Replay Entrance
+                        </button>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Stagger Delay</span><span id="val-15-delay" class="text-[#1A1917] font-semibold">40ms</span></div>
+                            <input type="range" min="10" max="120" step="5" value="40" class="apple-slider" oninput="updateCase15(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Initial Y-Offset</span><span id="val-15-y" class="text-[#1A1917] font-semibold">32px</span></div>
+                            <input type="range" min="12" max="72" value="32" class="apple-slider" oninput="updateCase15(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 16. Kinetic Weight Wave -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">16 Kinetic Weight Wave</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Sweep your pointer across the headline to create a proximity-driven wave of font-weight boldness, scale, and tracking expansion.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('16')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '16')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div id="kinetic-arena-16" class="h-64 bg-[#EFECE4]/55 flex flex-col items-center justify-center p-6 text-center select-none cursor-ew-resize">
+                        <div id="kinetic-word-16" class="text-3xl sm:text-5xl text-[#1A1917] flex items-center justify-center"></div>
+                        <p class="text-xs font-mono text-[#6E6C65] mt-5">Sweep horizontally across the letters above</p>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Influence Radius</span><span id="val-16-rad" class="text-[#1A1917] font-semibold">140px</span></div>
+                            <input type="range" min="60" max="280" value="140" class="apple-slider" oninput="updateCase16(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Tracking Expansion</span><span id="val-16-sp" class="text-[#1A1917] font-semibold">6px</span></div>
+                            <input type="range" min="0" max="14" value="6" class="apple-slider" oninput="updateCase16(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 17. Scroll Focus Reading -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">17 Scroll Focus Reading</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Scroll inside the viewport to progressively illuminate dimmed lines of copy as they pass through the focal reading zone.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('17')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '17')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div id="scroll-box-17" class="h-64 bg-[#EFECE4]/55 overflow-y-auto px-6 sm:px-14 py-12 space-y-5">
+                        <p class="scroll-line-17 text-lg sm:text-xl font-bold text-[#1A1917] transition-opacity" style="transition-duration: 0.25s; opacity: 1;">Thoughtful motion never overwhelms the content.</p>
+                        <p class="scroll-line-17 text-lg sm:text-xl font-bold text-[#1A1917] transition-opacity" style="transition-duration: 0.25s; opacity: 0.2;">Like gravity and inertia in the physical world,</p>
+                        <p class="scroll-line-17 text-lg sm:text-xl font-bold text-[#1A1917] transition-opacity" style="transition-duration: 0.25s; opacity: 0.2;">it responds immediately at the moment of interaction,</p>
+                        <p class="scroll-line-17 text-lg sm:text-xl font-bold text-[#1A1917] transition-opacity" style="transition-duration: 0.25s; opacity: 0.2;">giving static pixels a tactile, living presence.</p>
+                        <p class="scroll-line-17 text-lg sm:text-xl font-bold text-[#1A1917] transition-opacity" style="transition-duration: 0.25s; opacity: 0.2;">Scroll down to illuminate each line in sequence.</p>
+                        <div class="h-16"></div>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Fade Smoothness</span><span id="val-17-dur" class="text-[#1A1917] font-semibold">0.25s</span></div>
+                            <input type="range" min="0.05" max="0.6" step="0.05" value="0.25" class="apple-slider" oninput="updateCase17(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Inactive Opacity</span><span id="val-17-op" class="text-[#1A1917] font-semibold">0.20</span></div>
+                            <input type="range" min="0.1" max="0.5" step="0.05" value="0.20" class="apple-slider" oninput="updateCase17(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- =====================================================
+             TAB 3: Feedback Motion (3 Specimens)
+        ====================================================== -->
+        <section id="panel-feedback" class="tab-panel hidden space-y-16">
+
+            <!-- 18. Magnetic Button -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">18 Magnetic Button</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">When the cursor enters the gravitational field, the button interpolates smoothly towards the pointer via Lerp damping and springs back on exit.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('18')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '18')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div id="mag-arena-18" class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6 relative">
+                        <button id="mag-btn-18" class="px-8 py-4 rounded-full bg-[#1A1917] text-[#FAF9F6] font-semibold text-sm shadow-lg cursor-pointer will-change-transform">
+                            <span id="mag-label-18" class="inline-block pointer-events-none">Approach for Magnetic Pull</span>
+                        </button>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Magnetic Strength</span><span id="val-18-pull" class="text-[#1A1917] font-semibold">0.45</span></div>
+                            <input type="range" min="0.15" max="0.85" step="0.05" value="0.45" class="apple-slider" oninput="updateCase18(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Trigger Radius</span><span id="val-18-rad" class="text-[#1A1917] font-semibold">130px</span></div>
+                            <input type="range" min="40" max="220" value="130" class="apple-slider" oninput="updateCase18(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 19. Tactile Press & Ripple -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">19 Tactile Press &amp; Ripple</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Emulates a physical micro-switch with compressive scale feedback, radial click ripples, and spring-overshoot recovery.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('19')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '19')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <button id="ripple-btn-19" onclick="triggerPress19(event, this)" class="relative overflow-hidden px-8 py-4 rounded-2xl bg-[#1A1917] text-[#FAF9F6] font-semibold text-sm shadow-md cursor-pointer select-none">
+                            Click for Tactile Rebound
+                        </button>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Press Compression</span><span id="val-19-sc" class="text-[#1A1917] font-semibold">0.86</span></div>
+                            <input type="range" min="0.75" max="0.96" step="0.01" value="0.86" class="apple-slider" oninput="updateCase19(this.value, null)">
+                        </label>
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Spring Tension</span><span id="val-19-ten" class="text-[#1A1917] font-semibold">Medium Overshoot</span></div>
+                            <div class="inline-flex bg-[#E4E1D8] p-0.5 rounded-lg self-start">
+                                <button onclick="updateCase19(null, 'low')" id="ten-low" class="px-2.5 py-0.5 rounded text-[#6E6C65] text-[11px] cursor-pointer">Soft</button>
+                                <button onclick="updateCase19(null, 'med')" id="ten-med" class="px-2.5 py-0.5 rounded bg-[#1A1917] text-[#FAF9F6] text-[11px] cursor-pointer">Medium</button>
+                                <button onclick="updateCase19(null, 'high')" id="ten-high" class="px-2.5 py-0.5 rounded text-[#6E6C65] text-[11px] cursor-pointer">Snappy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 20. State Morph Button -->
+            <article class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1A1917]">20 State Morph Button</h2>
+                        <p class="text-xs sm:text-sm text-[#6E6C65] mt-1">Fluidly morphs a single button container across Idle, Circular Spinner, and Success Confirmation states.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openCodeModal('20')" class="px-3.5 py-2 rounded-full bg-[#FAF9F6] hover:bg-[#EFECE4] border border-[#E4E1D8] text-xs font-medium text-[#1A1917] transition cursor-pointer">View Code</button>
+                        <button onclick="copyPromptWithAnim(this, '20')" class="copy-btn px-4 py-2 rounded-full bg-[#1A1917] hover:bg-[#33322E] border border-[#1A1917] text-xs font-medium text-[#FAF9F6] flex items-center gap-1.5 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="browser-window">
+                    <div class="browser-topbar">
+                        <span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span>
+                    </div>
+                    <div class="h-64 bg-[#EFECE4]/55 flex items-center justify-center p-6">
+                        <button id="morph-btn-20" onclick="triggerMorph20()" style="transition-duration: 0.35s;" class="h-12 px-8 rounded-full bg-[#1A1917] text-[#FAF9F6] font-semibold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm">
+                            <span>Submit Prototype</span>
+                        </button>
+                    </div>
+                    <div class="param-bar grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Morph Duration</span><span id="val-20-dur" class="text-[#1A1917] font-semibold">0.35s</span></div>
+                            <input type="range" min="0.15" max="0.9" step="0.05" value="0.35" class="apple-slider" oninput="updateCase20(this.value, null)">
+                        </label>
+                        <label class="flex flex-col gap-1.5">
+                            <div class="flex justify-between font-mono text-[#6E6C65]"><span>Simulated Load</span><span id="val-20-wait" class="text-[#1A1917] font-semibold">1.0s</span></div>
+                            <input type="range" min="0.4" max="2.5" step="0.1" value="1.0" class="apple-slider" oninput="updateCase20(null, this.value)">
+                        </label>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
+    </main>
+
+    <!-- =========================================================
+         Source Code Inspector Modal (HTML Structure + CSS Style + JS)
+    ========================================================== -->
+    <div id="code-modal" class="fixed inset-0 z-50 bg-[#1A1917]/45 backdrop-blur-sm hidden items-center justify-center p-4" onclick="closeCodeModal()">
+        <div class="modal-card-enter w-full max-w-3xl rounded-2xl bg-[#FAF9F6] border border-[#E4E1D8] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+            <div class="px-5 py-3.5 border-b border-[#E4E1D8] bg-[#F2F0E9] flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#1A1917]"></span>
+                    <span id="modal-title" class="text-sm font-bold text-[#1A1917]">Component Source Code</span>
+                </div>
+                <button onclick="closeCodeModal()" class="w-7 h-7 rounded-full hover:bg-[#E4E1D8] text-[#1A1917] text-xs font-bold transition cursor-pointer">✕</button>
+            </div>
+
+            <div class="p-5 space-y-5 overflow-y-auto">
+                <!-- Live Parameterised AI Prompt -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] font-mono font-semibold text-[#6E6C65] uppercase tracking-wider">Vibe AI Prompt (Live Parameters)</span>
+                        <button onclick="copyModalPrompt(this)" class="copy-btn px-3 py-1 rounded-full bg-[#1A1917] hover:bg-[#33322E] text-[#FAF9F6] text-[11px] font-medium flex items-center gap-1 cursor-pointer">
+                            <span>Copy Prompt</span>
+                        </button>
+                    </div>
+                    <div id="modal-prompt" class="p-3.5 rounded-xl bg-[#EFECE4] border border-[#E4E1D8] text-xs text-[#1A1917] leading-relaxed"></div>
+                </div>
+
+                <!-- HTML Markup Section -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] font-mono font-semibold text-[#6E6C65] uppercase tracking-wider">HTML Structure</span>
+                        <button onclick="copySnippetBlock(this, 'modal-html')" class="copy-btn px-2.5 py-1 rounded-full bg-[#EFECE4] hover:bg-[#E4E1D8] border border-[#DCD8CD] text-[#1A1917] text-[11px] font-mono cursor-pointer">
+                            <span>Copy HTML</span>
+                        </button>
+                    </div>
+                    <pre id="modal-html" class="p-4 rounded-xl bg-[#1A1917] text-[#FAF9F6] text-xs font-mono overflow-x-auto leading-relaxed"></pre>
+                </div>
+
+                <!-- CSS Style Section -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] font-mono font-semibold text-[#6E6C65] uppercase tracking-wider">CSS Style</span>
+                        <button onclick="copySnippetBlock(this, 'modal-css')" class="copy-btn px-2.5 py-1 rounded-full bg-[#EFECE4] hover:bg-[#E4E1D8] border border-[#DCD8CD] text-[#1A1917] text-[11px] font-mono cursor-pointer">
+                            <span>Copy CSS</span>
+                        </button>
+                    </div>
+                    <pre id="modal-css" class="p-4 rounded-xl bg-[#1A1917] text-[#FAF9F6] text-xs font-mono overflow-x-auto leading-relaxed"></pre>
+                </div>
+
+                <!-- Interactive JS Section (shown when component uses JS) -->
+                <div id="modal-js-wrap">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] font-mono font-semibold text-[#6E6C65] uppercase tracking-wider">Interaction Logic (JavaScript)</span>
+                        <button onclick="copySnippetBlock(this, 'modal-js')" class="copy-btn px-2.5 py-1 rounded-full bg-[#EFECE4] hover:bg-[#E4E1D8] border border-[#DCD8CD] text-[#1A1917] text-[11px] font-mono cursor-pointer">
+                            <span>Copy JS</span>
+                        </button>
+                    </div>
+                    <pre id="modal-js" class="p-4 rounded-xl bg-[#1A1917] text-[#FAF9F6] text-xs font-mono overflow-x-auto leading-relaxed"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div id="toast-box" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
+
+    <script>
+        /* =========================================================
+           Global Dynamic Parameter State
+        ========================================================= */
+        const STATE = {
+            '01': { y: 16, dur: 0.35, shd: 45 },
+            '02': { fade: 0.35, spd: 1.2 },
+            '03': { deg: 18, bounce: 0.56 },
+            '04': { scale: 1.22, dur: 0.65 },
+            '05': { frames: 6, h: 4 },
+            '06': { dur: 0.45, rad: 16, mode: 'grid' },
+            '07': { dur: 0.40, alpha: 85 },
+            '08': { dur: 0.45, blur: 8 },
+            '09': { scale: 1.08, dur: 0.28 },
+            '10': { op: 0.32, sc: 0.92 },
+            '11': { hex: '#D97706', rgb: '217, 119, 6', rad: 200, intensity: 75 },
+            '12': { axis: 'y', dur: 0.70, persp: 900 },
+            '13': { deg: 45, z: 110 },
+            '14': { dur: 0.45, sc: 1.06 },
+            '15': { delay: 40, y: 32 },
+            '16': { rad: 140, sp: 6 },
+            '17': { dur: 0.25, op: 0.20 },
+            '18': { pull: 0.45, rad: 130 },
+            '19': { sc: 0.86, ten: 'med' },
+            '20': { dur: 0.35, wait: 1.0 }
+        };
+
+        function buildDynamicPrompt(id) {
+            const s = STATE[id];
+            const map = {
+                '01': `Add a hover lift interaction to the card: on hover, translate the card upward by ${s.y}px along the Y-axis whilst deepening the ambient shadow (intensity ${s.shd}%), using a ${s.dur}s cubic-bezier(0.16, 1, 0.3, 1) transition.`,
+                '02': `Create a hover-to-play video preview card: display a static cover thumbnail by default; on hover, fade out the cover over ${s.fade}s, play the internal motion stream smoothly at ${s.spd}x speed, and reveal a slim progress bar along the bottom edge.`,
+                '03': `Design a radial fan-out animation for three stacked cards: anchor transform-origin at the bottom centre (50% 100%), and on hover or click, spread the left and right cards horizontally by ±${Math.round(60 + s.deg * 2.9)}px whilst rotating them symmetrically by ±${s.deg}° with a spring overshoot factor of ${s.bounce}.`,
+                '04': `Build a slow-motion image zoom card: set overflow: hidden on the image frame and smoothly scale the artwork up to ${s.scale}x over ${s.dur}s on hover.`,
+                '05': `Implement a horizontal scrub-preview card: divide the preview into ${s.frames} keyframe segments so moving the cursor left or right switches frames instantaneously, indicated by a segmented top progress bar of ${s.h}px height.`,
+                '06': `Build a grid-to-list layout toggle with FLIP animation: capture bounding rectangles before and after toggling the layout class and smoothly animate elements into their new positions over ${s.dur}s with a ${s.rad}px border radius.`,
+                '07': `Create an info slide-up card: keep the bottom detail drawer hidden via translateY(100%) at rest, then glide it upward over ${s.dur}s on hover whilst fading in a dark gradient scrim at ${s.alpha}% opacity.`,
+                '08': `Implement a shared-element card expansion using FLIP: record the initial bounding rectangle on click and smoothly expand the card into a full detail overlay over ${s.dur}s with a ${s.blur}px backdrop blur.`,
+                '09': `Create a live drag-to-reorder card grid: when dragging a card, scale it up to ${s.scale}x with a deeper shadow and smoothly shift sibling cards into vacated slots over ${s.dur}s using FLIP transforms.`,
+                '10': `Add a focus-dimming interaction to a card grid: hovering over any card keeps it crisp whilst reducing sibling cards to ${s.op} opacity and ${s.sc}x scale.`,
+                '11': `Build a proximity spotlight border-glow grid: broadcast pointer coordinates into each card's local CSS variables (--mx, --my) using a ${s.hex} radial gradient with a ${s.rad}px radius and ${s.intensity}% intensity across a 1.5px border so hovering between two cards illuminates both edges simultaneously.`,
+                '12': `Construct a 3D double-sided flip card: apply perspective: ${s.persp}px on the stage, enable transform-style: preserve-3d and backface-visibility: hidden, and rotate 180° around the ${s.axis.toUpperCase()}-axis over ${s.dur}s on hover or click.`,
+                '13': `Design a continuous physics-driven 3D Coverflow carousel: keep the centre card facing forward whilst flanking cards rotate ±${s.deg}° around the Y-axis and recede ${s.z}px in Z-depth, supporting continuous pointer dragging, spring snapping, and auto-sliding.`,
+                '14': `Build a monthly/annual pricing switcher: roll price numerals vertically inside an overflow-hidden window over ${s.dur}s when toggling billing cycles, whilst scaling the featured tier card to ${s.sc}x with a bold dark border.`,
+                '15': `Create a staggered character reveal headline: split text into inline-block character spans starting ${s.y}px downward with blur, animating each character in sequentially with a ${s.delay}ms stagger delay.`,
+                '16': `Implement a kinetic font-weight wave headline: track horizontal cursor distance to dynamically increase font-weight, scale, and letter-spacing up to ${s.sp}px for characters within a ${s.rad}px radius.`,
+                '17': `Create a scroll-focus reading highlight effect: keep inactive lines at ${s.op} opacity and smoothly transition lines entering the central reading zone to full opacity over ${s.dur}s.`,
+                '18': `Build a magnetic micro-interaction button: within a ${s.rad}px trigger radius, pull the button smoothly towards the cursor at ${s.pull} strength using requestAnimationFrame Lerp damping.`,
+                '19': `Add tactile press and ripple feedback to a button: compress to ${s.sc}x on press with an expanding radial ripple at the pointer coordinates, then rebound using a ${s.ten === 'high' ? 'snappy' : s.ten === 'low' ? 'soft' : 'medium'} spring curve.`,
+                '20': `Design a state-morphing submit button: on click, contract smoothly over ${s.dur}s into a circular loading spinner, wait ${s.wait}s, and expand into a forest-green confirmation state before resetting.`
+            };
+            return map[id] || '';
+        }
+
+        function getComponentSource(id) {
+            const s = STATE[id];
+            const sources = {
+                '01': {
+                    html: `<div class="lift-card">\n  <span class="badge">ELEVATION</span>\n  <h3>Hover for Spatial Elevation</h3>\n  <p>Elevates smoothly along the Y-axis with ambient shadow depth.</p>\n</div>`,
+                    css: `.lift-card {\n  --lift-y: -${s.y}px;\n  --lift-dur: ${s.dur}s;\n  --shadow-alpha: ${(s.shd / 260).toFixed(2)};\n  --shadow-blur: ${Math.round(12 + s.shd * 0.45)}px;\n  background: #FAF9F6;\n  border: 1px solid #E4E1D8;\n  border-radius: 1rem;\n  transition: transform var(--lift-dur) cubic-bezier(0.16, 1, 0.3, 1),\n              box-shadow var(--lift-dur) cubic-bezier(0.16, 1, 0.3, 1),\n              border-color var(--lift-dur) ease;\n}\n.lift-card:hover {\n  transform: translateY(var(--lift-y));\n  box-shadow: 0 calc(var(--lift-y) * -1.1) var(--shadow-blur) -4px rgba(26, 25, 23, var(--shadow-alpha));\n  border-color: #1A1917;\n}`,
+                    js: ''
+                },
+                '02': {
+                    html: `<div class="hover-play-card">\n  <canvas id="stream-canvas"></canvas>\n  <div class="cover-overlay">\n    <button class="play-icon">▶</button>\n    <span>Hover to Preview Motion Stream</span>\n  </div>\n  <div class="progress-track"><div class="progress-fill"></div></div>\n</div>`,
+                    css: `.hover-play-card {\n  position: relative;\n  overflow: hidden;\n  border-radius: 1rem;\n}\n.cover-overlay {\n  position: absolute;\n  inset: 0;\n  transition: opacity ${s.fade}s ease;\n}\n.hover-play-card:hover .cover-overlay {\n  opacity: 0;\n}\n.progress-track {\n  position: absolute;\n  inset-inline: 0;\n  bottom: 0;\n  height: 6px;\n  opacity: 0;\n  transition: opacity 0.25s ease;\n}\n.hover-play-card:hover .progress-track {\n  opacity: 1;\n}`,
+                    js: `let playing = false, progress = 0;\ncard.addEventListener('mouseenter', () => playing = true);\ncard.addEventListener('mouseleave', () => { playing = false; progress = 0; });\nfunction tick() {\n  if (playing) {\n    progress = (progress + 0.35 * ${s.spd}) % 100;\n    progressFill.style.width = progress + '%';\n  }\n  requestAnimationFrame(tick);\n}\ntick();`
+                },
+                '03': {
+                    html: `<div class="fan-stage" onclick="this.classList.toggle('is-fanned')">\n  <div class="fan-card fan-left">01 / Wireframe</div>\n  <div class="fan-card fan-right">03 / Delivery</div>\n  <div class="fan-card fan-center">02 / Core Deck</div>\n</div>`,
+                    css: `.fan-stage {\n  --fan-angle: ${s.deg}deg;\n  --fan-spread: ${Math.round(60 + s.deg * 2.9)}px;\n  --fan-ease: cubic-bezier(0.34, ${(1 + s.bounce * 1.35).toFixed(2)}, 0.64, 1);\n  position: relative;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.fan-card {\n  transform-origin: 50% 100%;\n  transition: transform 0.5s var(--fan-ease), box-shadow 0.4s ease;\n}\n.fan-left  { position: absolute; transform: translateX(-10px) rotate(-4deg); }\n.fan-right { position: absolute; transform: translateX(10px) rotate(4deg); }\n.fan-center { position: relative; z-index: 10; }\n\n.fan-stage:hover .fan-left,\n.fan-stage.is-fanned .fan-left {\n  transform: translateX(calc(var(--fan-spread) * -1)) translateY(6px) rotate(calc(var(--fan-angle) * -1));\n}\n.fan-stage:hover .fan-right,\n.fan-stage.is-fanned .fan-right {\n  transform: translateX(var(--fan-spread)) translateY(6px) rotate(var(--fan-angle));\n}\n.fan-stage:hover .fan-center,\n.fan-stage.is-fanned .fan-center {\n  transform: translateY(-14px) scale(1.04);\n}`,
+                    js: ''
+                },
+                '04': {
+                    html: `<div class="zoom-card">\n  <div class="zoom-frame">\n    <img class="zoom-target" src="artwork.svg" alt="Study" />\n  </div>\n  <div class="caption">Bauhaus Geometric Study</div>\n</div>`,
+                    css: `.zoom-frame {\n  overflow: hidden;\n  height: 144px;\n}\n.zoom-target {\n  width: 100%;\n  height: 100%;\n  object-fit: cover;\n  transition: transform ${s.dur}s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.zoom-card:hover .zoom-target {\n  transform: scale(${s.scale});\n}`,
+                    js: ''
+                },
+                '05': {
+                    html: `<div id="scrub-card" class="scrub-card">\n  <div id="scrub-bars" class="scrub-bars"></div>\n  <div class="frame-content">\n    <span id="frame-badge">FRAME 01</span>\n    <h3 id="frame-title">Wireframe &amp; Architecture</h3>\n  </div>\n</div>`,
+                    css: `.scrub-card {\n  cursor: ew-resize;\n  user-select: none;\n}\n.scrub-bars {\n  display: flex;\n  gap: 6px;\n}\n.scrub-segment {\n  flex: 1;\n  height: ${s.h}px;\n  border-radius: 999px;\n  background: #DCD8CD;\n  transition: background-color 0.15s ease;\n}\n.scrub-segment.active {\n  background: #1A1917;\n}`,
+                    js: `const totalFrames = ${s.frames};\ncard.addEventListener('mousemove', (e) => {\n  const rect = card.getBoundingClientRect();\n  const ratio = Math.max(0, Math.min(0.999, (e.clientX - rect.left) / rect.width));\n  const activeIdx = Math.floor(ratio * totalFrames);\n  updateScrubFrame(activeIdx);\n});`
+                },
+                '06': {
+                    html: `<div class="toolbar">\n  <button onclick="setLayout('grid')">Grid</button>\n  <button onclick="setLayout('list')">List</button>\n</div>\n<div id="flip-grid" class="grid-layout">\n  <div class="grid-item">01 Colour Tokens</div>\n  <div class="grid-item">02 Typography</div>\n  <div class="grid-item">03 Spatial Grid</div>\n  <div class="grid-item">04 Easing Curves</div>\n</div>`,
+                    css: `.grid-layout {\n  display: grid;\n  grid-template-columns: repeat(4, 1fr);\n  gap: 12px;\n}\n.list-layout {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n}\n.grid-item {\n  border-radius: ${s.rad}px;\n  background: #FAF9F6;\n  border: 1px solid #E4E1D8;\n}`,
+                    js: `function setLayout(mode) {\n  const items = Array.from(container.children);\n  const first = items.map(el => el.getBoundingClientRect());\n  container.className = mode === 'grid' ? 'grid-layout' : 'list-layout';\n  items.forEach((el, i) => {\n    const last = el.getBoundingClientRect();\n    el.animate([\n      { transform: \`translate(\${first[i].left - last.left}px, \${first[i].top - last.top}px)\` },\n      { transform: 'translate(0, 0)' }\n    ], { duration: ${Math.round(s.dur * 1000)}, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });\n  });\n}`
+                },
+                '07': {
+                    html: `<div class="slideup-card">\n  <div class="slide-bg">Hover to Reveal Bottom Details ↑</div>\n  <div class="slide-panel">\n    <h4>Minimalist Industrial Design Annual</h4>\n    <p>Details glide upward smoothly on hover.</p>\n  </div>\n</div>`,
+                    css: `.slideup-card {\n  position: relative;\n  overflow: hidden;\n  border-radius: 1rem;\n}\n.slide-panel {\n  position: absolute;\n  inset-inline: 0;\n  bottom: 0;\n  background: linear-gradient(to top, rgba(26, 25, 23, ${(s.alpha / 100).toFixed(2)}) 0%, transparent 100%);\n  transform: translateY(100%);\n  transition: transform ${s.dur}s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.slideup-card:hover .slide-panel {\n  transform: translateY(0%);\n}`,
+                    js: ''
+                },
+                '08': {
+                    html: `<div id="origin-card" onclick="expandCard()">Click to Expand Full Detail</div>\n<div id="detail-backdrop" class="backdrop">\n  <div id="expanded-card">\n    <button onclick="collapseCard()">✕</button>\n    <h3>Shared-Element Spatial Transition</h3>\n  </div>\n</div>`,
+                    css: `.backdrop {\n  position: fixed;\n  inset: 0;\n  display: none;\n  backdrop-filter: blur(${s.blur}px);\n  background: rgba(26, 25, 23, 0.2);\n}`,
+                    js: `function expandCard() {\n  const first = originCard.getBoundingClientRect();\n  backdrop.style.display = 'flex';\n  const last = expandedCard.getBoundingClientRect();\n  const dx = (first.left + first.width / 2) - (last.left + last.width / 2);\n  const dy = (first.top + first.height / 2) - (last.top + last.height / 2);\n  expandedCard.animate([\n    { transform: \`translate(\${dx}px, \${dy}px) scale(\${first.width / last.width}, \${first.height / last.height})\`, opacity: 0.4 },\n    { transform: 'translate(0, 0) scale(1, 1)', opacity: 1 }\n  ], { duration: ${Math.round(s.dur * 1000)}, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });\n}`
+                },
+                '09': {
+                    html: `<div id="sort-grid" class="sort-grid">\n  <div class="sort-card">01 Concept Sketch</div>\n  <div class="sort-card">02 Motion Params</div>\n  <div class="sort-card">03 User Testing</div>\n  <div class="sort-card">04 Live Release</div>\n</div>`,
+                    css: `.sort-card {\n  cursor: grab;\n  user-select: none;\n}\n.sort-card.is-dragging {\n  transform: scale(${s.scale});\n  box-shadow: 0 18px 32px -8px rgba(26, 25, 23, 0.22);\n  z-index: 20;\n}`,
+                    js: `// On pointermove over sibling card:\nconst siblings = Array.from(grid.children);\nconst first = siblings.map(el => el.getBoundingClientRect());\ngrid.insertBefore(draggingCard, targetCard);\nsiblings.forEach((el, i) => {\n  if (el === draggingCard) return;\n  const last = el.getBoundingClientRect();\n  el.animate([\n    { transform: \`translate(\${first[i].left - last.left}px, \${first[i].top - last.top}px)\` },\n    { transform: 'translate(0, 0)' }\n  ], { duration: ${Math.round(s.dur * 1000)}, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });\n});`
+                },
+                '10': {
+                    html: `<div class="focus-grid">\n  <div class="focus-card">A Visual Focus</div>\n  <div class="focus-card">B Depth Contrast</div>\n  <div class="focus-card">C Whitespace</div>\n  <div class="focus-card">D Hierarchy</div>\n</div>`,
+                    css: `.focus-card {\n  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.focus-grid:hover .focus-card {\n  opacity: ${s.op};\n  transform: scale(${s.sc});\n}\n.focus-grid .focus-card:hover {\n  opacity: 1;\n  transform: scale(1.04);\n  border-color: #1A1917;\n}`,
+                    js: ''
+                },
+                '11': {
+                    html: `<div id="spotlight-arena" class="spotlight-grid">\n  <div class="spot-card"><div class="spot-card-inner">Card 01</div></div>\n  <div class="spot-card"><div class="spot-card-inner">Card 02</div></div>\n  <div class="spot-card"><div class="spot-card-inner">Card 03</div></div>\n</div>`,
+                    css: `.spot-card {\n  --spot-radius: ${s.rad}px;\n  --spot-rgb: ${s.rgb};\n  --spot-intensity: ${(s.intensity / 100).toFixed(2)};\n  position: relative;\n  background: #E4E1D8;\n  padding: 1.5px;\n  border-radius: 1rem;\n  overflow: hidden;\n}\n.spot-card::before {\n  content: "";\n  position: absolute;\n  inset: 0;\n  background: radial-gradient(var(--spot-radius) circle at var(--mx, -999px) var(--my, -999px), rgba(var(--spot-rgb), var(--spot-intensity)), transparent 75%);\n}\n.spot-card-inner {\n  position: relative;\n  z-index: 1;\n  background: #FAF9F6;\n  border-radius: calc(1rem - 1.5px);\n}`,
+                    js: `arena.addEventListener('pointermove', (e) => {\n  cards.forEach(card => {\n    const r = card.getBoundingClientRect();\n    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');\n    card.style.setProperty('--my', (e.clientY - r.top) + 'px');\n  });\n});`
+                },
+                '12': {
+                    html: `<div class="flip-stage axis-${s.axis}" onclick="this.classList.toggle('is-flipped')">\n  <div class="flip-inner">\n    <div class="flip-face flip-front">Front Face</div>\n    <div class="flip-face flip-back">Back Specification</div>\n  </div>\n</div>`,
+                    css: `.flip-stage {\n  perspective: ${s.persp}px;\n}\n.flip-inner {\n  position: relative;\n  width: 100%;\n  height: 100%;\n  transform-style: preserve-3d;\n  transition: transform ${s.dur}s cubic-bezier(0.34, 1.36, 0.64, 1);\n}\n.flip-stage:hover .flip-inner,\n.flip-stage.is-flipped .flip-inner {\n  transform: rotate${s.axis.toUpperCase()}(180deg);\n}\n.flip-face {\n  position: absolute;\n  inset: 0;\n  backface-visibility: hidden;\n}\n.flip-back {\n  transform: rotate${s.axis.toUpperCase()}(180deg);\n}`,
+                    js: ''
+                },
+                '13': {
+                    html: `<div id="coverflow-stage" class="coverflow-scene">\n  <div class="coverflow-item">01</div>\n  <div class="coverflow-item">02</div>\n  <div class="coverflow-item">03</div>\n</div>`,
+                    css: `.coverflow-scene {\n  perspective: 1100px;\n  position: relative;\n}\n.coverflow-item {\n  position: absolute;\n  transform-style: preserve-3d;\n  will-change: transform, opacity;\n}`,
+                    js: `function renderCoverflow(currentIndex) {\n  cards.forEach((el, idx) => {\n    const offset = idx - currentIndex;\n    const clamped = Math.max(-1, Math.min(1, offset));\n    const rotY = -Math.sin(clamped * Math.PI / 2) * ${s.deg};\n    const tx = offset * 124;\n    const tz = 48 - Math.min(Math.abs(offset), 1) * (48 + ${s.z});\n    el.style.transform = \`translate3d(\${tx}px, 0, \${tz}px) rotateY(\${rotY}deg)\`;\n  });\n}`
+                },
+                '14': {
+                    html: `<div class="pricing-grid">\n  <div class="plan-card">\n    <span>£</span>\n    <div class="price-window"><div class="price-strip"><span>29</span><span>23</span></div></div>\n  </div>\n  <div class="plan-card featured">Studio Pro</div>\n</div>`,
+                    css: `.price-window {\n  height: 2.5rem;\n  overflow: hidden;\n}\n.price-strip {\n  display: flex;\n  flex-direction: column;\n  transition: transform ${s.dur}s cubic-bezier(0.34, 1.56, 0.64, 1);\n}\n.price-strip.is-annual {\n  transform: translateY(-2.5rem);\n}\n.plan-card.featured {\n  transform: scale(${s.sc});\n}`,
+                    js: `toggleBtn.addEventListener('click', () => {\n  strips.forEach(s => s.classList.toggle('is-annual'));\n});`
+                },
+                '15': {
+                    html: `<h1 id="stagger-headline">Design in Motion</h1>`,
+                    css: `.stagger-char {\n  display: inline-block;\n  opacity: 0;\n  transform: translateY(${s.y}px);\n  filter: blur(8px);\n  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),\n              transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),\n              filter 0.55s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.stagger-char.active {\n  opacity: 1;\n  transform: translateY(0);\n  filter: blur(0);\n}`,
+                    js: `el.innerHTML = text.split('').map((ch, i) =>\n  \`<span class="stagger-char" style="transition-delay: \${i * ${s.delay}}ms">\${ch === ' ' ? '&nbsp;' : ch}</span>\`\n).join('');\nrequestAnimationFrame(() => el.querySelectorAll('.stagger-char').forEach(c => c.classList.add('active')));`
+                },
+                '16': {
+                    html: `<div id="kinetic-headline">KINETIC</div>`,
+                    css: `#kinetic-headline span {\n  display: inline-block;\n  transition: transform 0.12s ease-out, margin 0.12s ease-out;\n}`,
+                    js: `arena.addEventListener('pointermove', (e) => {\n  chars.forEach(char => {\n    const r = char.getBoundingClientRect();\n    const dist = Math.abs(e.clientX - (r.left + r.width / 2));\n    const inf = Math.max(0, 1 - dist / ${s.rad});\n    char.style.fontWeight = Math.round(400 + inf * 500);\n    char.style.transform = \`scale(\${(1 + inf * 0.28).toFixed(2)})\`;\n    char.style.margin = \`0 \${(inf * ${s.sp}).toFixed(1)}px\`;\n  });\n});`
+                },
+                '17': {
+                    html: `<div id="scroll-reader">\n  <p class="scroll-line">Thoughtful motion never overwhelms the content.</p>\n  <p class="scroll-line">Like gravity and inertia in the physical world,</p>\n</div>`,
+                    css: `.scroll-line {\n  opacity: ${s.op};\n  transition: opacity ${s.dur}s ease;\n}\n.scroll-line.in-focus {\n  opacity: 1;\n}`,
+                    js: `reader.addEventListener('scroll', () => {\n  const center = reader.getBoundingClientRect().top + reader.clientHeight * 0.42;\n  lines.forEach(line => {\n    const r = line.getBoundingClientRect();\n    const dist = Math.abs((r.top + r.height / 2) - center);\n    line.classList.toggle('in-focus', dist < 46);\n  });\n});`
+                },
+                '18': {
+                    html: `<div id="mag-arena">\n  <button id="mag-btn"><span id="mag-label">Approach for Magnetic Pull</span></button>\n</div>`,
+                    css: `#mag-btn {\n  will-change: transform;\n  border-radius: 999px;\n}`,
+                    js: `let tx = 0, ty = 0, cx = 0, cy = 0;\narena.addEventListener('pointermove', (e) => {\n  const r = btn.getBoundingClientRect();\n  const dx = e.clientX - (r.left + r.width / 2);\n  const dy = e.clientY - (r.top + r.height / 2);\n  if (Math.hypot(dx, dy) < ${s.rad}) {\n    tx = dx * ${s.pull}; ty = dy * ${s.pull};\n  } else { tx = 0; ty = 0; }\n});\nfunction loop() {\n  cx += (tx - cx) * 0.16;\n  cy += (ty - cy) * 0.16;\n  btn.style.transform = \`translate3d(\${cx}px, \${cy}px, 0)\`;\n  requestAnimationFrame(loop);\n}\nloop();`
+                },
+                '19': {
+                    html: `<button class="tactile-btn" onclick="triggerPress(event, this)">Click for Tactile Rebound</button>`,
+                    css: `.tactile-btn {\n  position: relative;\n  overflow: hidden;\n}\n@keyframes rippleExpand {\n  to { transform: scale(4.2); opacity: 0; }\n}\n.ripple-wave {\n  position: absolute;\n  border-radius: 50%;\n  background: rgba(250, 249, 246, 0.42);\n  animation: rippleExpand 0.6s cubic-bezier(0.16, 1, 0.3, 1);\n}`,
+                    js: `function triggerPress(e, btn) {\n  // Append radial ripple at pointer\n  btn.animate([\n    { transform: 'scale(${s.sc})' },\n    { transform: 'scale(1)' }\n  ], { duration: 480, easing: '${s.ten === 'high' ? 'cubic-bezier(0.34, 2.35, 0.55, 1)' : s.ten === 'low' ? 'cubic-bezier(0.16, 1, 0.3, 1)' : 'cubic-bezier(0.34, 1.65, 0.64, 1)'}' });\n}`
+                },
+                '20': {
+                    html: `<button id="morph-btn" onclick="submitMorph()">Submit Prototype</button>`,
+                    css: `#morph-btn {\n  height: 48px;\n  border-radius: 999px;\n  transition: all ${s.dur}s cubic-bezier(0.16, 1, 0.3, 1);\n}`,
+                    js: `function submitMorph() {\n  btn.style.width = '48px';\n  btn.innerHTML = '<span class="spinner"></span>';\n  setTimeout(() => {\n    btn.style.width = '156px';\n    btn.style.background = '#166534';\n    btn.innerText = '✓ Submitted';\n  }, ${Math.round(s.wait * 1000)});\n}`
+                }
+            };
+            return sources[id] || { html: '', css: '', js: '' };
+        }
+
+        /* =========================================================
+           Clipboard Helper & Animated "Copied!" Feedback
+        ========================================================= */
+        function writeClipboardText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).catch(() => {});
+            }
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        function animateCopiedState(btn, idleLabel, successLabel = 'Copied!') {
+            if (btn._timer) clearTimeout(btn._timer);
+
+            // Spawn floating animated pill above button
+            const existingPill = btn.querySelector('.copied-float-pill');
+            if (existingPill) existingPill.remove();
+            const pill = document.createElement('span');
+            pill.className = 'copied-float-pill';
+            pill.innerText = successLabel;
+            btn.appendChild(pill);
+            setTimeout(() => { if (pill.parentNode) pill.remove(); }, 1450);
+
+            btn.classList.add('copied-state');
+            btn.innerHTML = `
+                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path class="check-path-anim" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>${successLabel}</span>
+            `;
+            // Re-append floating pill after innerHTML replacement
+            btn.appendChild(pill);
+
+            btn._timer = setTimeout(() => {
+                btn.classList.remove('copied-state');
+                btn.innerHTML = `<span>${idleLabel}</span>`;
+            }, 1800);
+        }
+
+        function copyPromptWithAnim(btn, id) {
+            const promptText = buildDynamicPrompt(id);
+            writeClipboardText(promptText);
+            animateCopiedState(btn, 'Copy Prompt', 'Copied!');
+            showMiniToast('Copied! Vibe Prompt copied to clipboard');
+        }
+
+        function copyModalPrompt(btn) {
+            const text = document.getElementById('modal-prompt').innerText;
+            writeClipboardText(text);
+            animateCopiedState(btn, 'Copy Prompt', 'Copied!');
+            showMiniToast('Copied! Vibe Prompt copied to clipboard');
+        }
+
+        function copySnippetBlock(btn, preId) {
+            const text = document.getElementById(preId).innerText;
+            const idleLabel = btn.innerText.trim();
+            writeClipboardText(text);
+            animateCopiedState(btn, idleLabel, 'Copied!');
+        }
+
+        function showMiniToast(text) {
+            const box = document.getElementById('toast-box');
+            box.innerHTML = `
+                <div class="px-4 py-2 rounded-full bg-[#1A1917] text-[#FAF9F6] text-xs font-medium shadow-xl flex items-center gap-2 transition-all duration-300 translate-y-2 opacity-0" id="active-toast">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>${text}</span>
+                </div>
+            `;
+            requestAnimationFrame(() => {
+                const t = document.getElementById('active-toast');
+                if (t) t.classList.remove('translate-y-2', 'opacity-0');
+            });
+            setTimeout(() => {
+                const t = document.getElementById('active-toast');
+                if (t) {
+                    t.classList.add('translate-y-2', 'opacity-0');
+                    setTimeout(() => { if (box.contains(t)) box.innerHTML = ''; }, 300);
+                }
+            }, 2000);
+        }
+
+        function openCodeModal(id) {
+            const src = getComponentSource(id);
+            document.getElementById('modal-title').innerText = `Component Source · Specimen ${id}`;
+            document.getElementById('modal-prompt').innerText = buildDynamicPrompt(id);
+            document.getElementById('modal-html').innerText = src.html;
+            document.getElementById('modal-css').innerText = src.css;
+
+            const jsWrap = document.getElementById('modal-js-wrap');
+            if (src.js && src.js.trim().length > 0) {
+                jsWrap.classList.remove('hidden');
+                document.getElementById('modal-js').innerText = src.js;
+            } else {
+                jsWrap.classList.add('hidden');
+            }
+
+            const m = document.getElementById('code-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function closeCodeModal() {
+            const m = document.getElementById('code-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeCodeModal();
+        });
+
+        /* =========================================================
+           Navigation Pill Switcher
+        ========================================================= */
+        function moveNavPill(btn) {
+            const pill = document.getElementById('nav-pill');
+            if (!btn || !pill) return;
+            pill.style.width = `${btn.offsetWidth}px`;
+            pill.style.transform = `translateX(${btn.offsetLeft - 4}px)`;
+        }
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('text-[#FAF9F6]');
+                b.classList.add('text-[#6E6C65]');
+            });
+            btn.classList.remove('text-[#6E6C65]');
+            btn.classList.add('text-[#FAF9F6]');
+            moveNavPill(btn);
+
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+
+            if (tab === 'typography') playStagger15();
+        }
+
+        /* =========================================================
+           Real-Time Parameter Controllers
+        ========================================================= */
+        // 01 Hover Lift
+        function updateCase01(y, dur, shd) {
+            const el = document.getElementById('card-01-demo');
+            if (y !== null) {
+                STATE['01'].y = Number(y);
+                el.style.setProperty('--lift-y', `-${y}px`);
+                document.getElementById('val-01-y').innerText = `${y}px`;
+            }
+            if (dur !== null) {
+                STATE['01'].dur = Number(dur);
+                el.style.setProperty('--lift-dur', `${dur}s`);
+                document.getElementById('val-01-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+            if (shd !== null) {
+                STATE['01'].shd = Number(shd);
+                el.style.setProperty('--shadow-alpha', (shd / 260).toFixed(2));
+                el.style.setProperty('--shadow-blur', `${Math.round(12 + shd * 0.45)}px`);
+                document.getElementById('val-01-shd').innerText = `${shd}%`;
+            }
+        }
+
+        // 02 Hover Play
+        function updateCase02(fade, spd) {
+            if (fade !== null) {
+                STATE['02'].fade = Number(fade);
+                document.getElementById('cover-02').style.transitionDuration = `${fade}s`;
+                document.getElementById('val-02-fade').innerText = `${Number(fade).toFixed(2)}s`;
+            }
+            if (spd !== null) {
+                STATE['02'].spd = Number(spd);
+                document.getElementById('val-02-spd').innerText = `${Number(spd).toFixed(1)}x`;
+            }
+        }
+        (function initCanvas02() {
+            const card = document.getElementById('hover-play-card-02');
+            const canvas = document.getElementById('canvas-02');
+            const bar = document.getElementById('progress-02');
+            const ctx = canvas.getContext('2d');
+            let playing = false, prog = 0, t = 0;
+
+            card.addEventListener('mouseenter', () => { playing = true; });
+            card.addEventListener('mouseleave', () => { playing = false; prog = 0; bar.style.width = '0%'; });
+
+            function loop() {
+                if (playing) {
+                    const spd = STATE['02'].spd;
+                    t += 0.03 * spd;
+                    prog = (prog + 0.35 * spd) % 100;
+                    bar.style.width = `${prog}%`;
+
+                    const w = canvas.width = card.clientWidth || 400;
+                    const h = canvas.height = card.clientHeight || 200;
+                    ctx.fillStyle = '#1A1917';
+                    ctx.fillRect(0, 0, w, h);
+
+                    for (let i = 0; i < 4; i++) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(250, 249, 246, ${0.18 + i * 0.14})`;
+                        ctx.lineWidth = 2;
+                        for (let x = 0; x <= w; x += 8) {
+                            const y = h / 2 + Math.sin(x * 0.014 + t + i * 1.1) * (24 + i * 10);
+                            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                    }
+                }
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+
+        // 03 Fan Out
+        function updateCase03(deg, bounce) {
+            const stage = document.getElementById('fan-stage-03');
+            if (deg !== null) {
+                const numDeg = Number(deg);
+                STATE['03'].deg = numDeg;
+                const spreadPx = Math.round(60 + numDeg * 2.9);
+                stage.style.setProperty('--fan-angle', `${numDeg}deg`);
+                stage.style.setProperty('--fan-spread', `${spreadPx}px`);
+                document.getElementById('val-03-deg').innerText = `±${numDeg}°`;
+            }
+            if (bounce !== null) {
+                STATE['03'].bounce = Number(bounce);
+                const y2 = (1 + Number(bounce) * 1.35).toFixed(2);
+                stage.style.setProperty('--fan-ease', `cubic-bezier(0.34, ${y2}, 0.64, 1)`);
+                document.getElementById('val-03-bounce').innerText = Number(bounce).toFixed(2);
+            }
+        }
+
+        // 04 Image Zoom
+        function updateCase04(scale, dur) {
+            const card = document.getElementById('zoom-card-04');
+            if (scale !== null) {
+                STATE['04'].scale = Number(scale);
+                card.style.setProperty('--zoom-scale', scale);
+                document.getElementById('val-04-scale').innerText = `${Number(scale).toFixed(2)}x`;
+            }
+            if (dur !== null) {
+                STATE['04'].dur = Number(dur);
+                card.style.setProperty('--zoom-dur', `${dur}s`);
+                document.getElementById('val-04-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+        }
+
+        // 05 Scrub Preview
+        const SCRUB_LABELS = [
+            'Wireframe & Architecture', 'Grid & Whitespace Ratio', 'Monochrome Hierarchy', 'Micro-Interaction Curves',
+            'Edge Light & Shadow', 'Responsive Breakpoints', 'Tactile Feedback Check', 'Typographic Rhythm',
+            'Accessibility Contrast', 'Render Performance', 'Component Library', 'Design System Handover'
+        ];
+        function renderScrubBars05(activeIdx = 0) {
+            const wrap = document.getElementById('scrub-bars-05');
+            const total = STATE['05'].frames;
+            const h = STATE['05'].h;
+            wrap.innerHTML = '';
+            for (let i = 0; i < total; i++) {
+                const seg = document.createElement('div');
+                seg.style.height = `${h}px`;
+                seg.className = `flex-1 rounded-full transition-colors duration-150 ${i <= activeIdx ? 'bg-[#1A1917]' : 'bg-[#DCD8CD]'}`;
+                wrap.appendChild(seg);
+            }
+            document.getElementById('scrub-badge-05').innerText = `FRAME ${String(activeIdx + 1).padStart(2, '0')}`;
+            document.getElementById('scrub-title-05').innerText = SCRUB_LABELS[activeIdx % SCRUB_LABELS.length];
+            document.getElementById('scrub-stat-05').innerText = `${activeIdx + 1} / ${total}`;
+        }
+        function updateCase05(frames, h) {
+            if (frames !== null) {
+                STATE['05'].frames = Number(frames);
+                document.getElementById('val-05-frames').innerText = `${frames} frames`;
+            }
+            if (h !== null) {
+                STATE['05'].h = Number(h);
+                document.getElementById('val-05-h').innerText = `${h}px`;
+            }
+            renderScrubBars05(0);
+        }
+        (function initScrub05() {
+            renderScrubBars05(0);
+            const card = document.getElementById('scrub-card-05');
+            let lastIdx = 0;
+            const handleMove = (clientX) => {
+                const r = card.getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(0.999, (clientX - r.left) / r.width));
+                const idx = Math.floor(ratio * STATE['05'].frames);
+                if (idx !== lastIdx) {
+                    lastIdx = idx;
+                    renderScrubBars05(idx);
+                }
+            };
+            card.addEventListener('mousemove', e => handleMove(e.clientX));
+            card.addEventListener('touchmove', e => { if (e.touches[0]) handleMove(e.touches[0].clientX); }, { passive: true });
+        })();
+
+        // 06 Grid Switch (FLIP)
+        function toggleGrid06(mode) {
+            if (STATE['06'].mode === mode) return;
+            STATE['06'].mode = mode;
+            const container = document.getElementById('grid-container-06');
+            const items = Array.from(container.children);
+            const firstRects = items.map(el => el.getBoundingClientRect());
+
+            document.getElementById('layout-label-06').innerText = mode === 'grid' ? 'LAYOUT: GRID' : 'LAYOUT: LIST';
+            document.getElementById('btn-grid-06').className = mode === 'grid' ? 'px-2.5 py-1 rounded-md bg-[#1A1917] text-[#FAF9F6] text-xs font-medium cursor-pointer' : 'px-2.5 py-1 rounded-md text-[#6E6C65] text-xs font-medium cursor-pointer';
+            document.getElementById('btn-list-06').className = mode === 'list' ? 'px-2.5 py-1 rounded-md bg-[#1A1917] text-[#FAF9F6] text-xs font-medium cursor-pointer' : 'px-2.5 py-1 rounded-md text-[#6E6C65] text-xs font-medium cursor-pointer';
+
+            if (mode === 'grid') {
+                container.className = 'grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1';
+                items.forEach(el => el.classList.remove('flex-row', 'items-center'));
+            } else {
+                container.className = 'flex flex-col gap-2 flex-1 overflow-y-auto';
+                items.forEach(el => el.classList.add('flex-row', 'items-center'));
+            }
+
+            const durMs = STATE['06'].dur * 1000;
+            items.forEach((el, i) => {
+                const last = el.getBoundingClientRect();
+                const dx = firstRects[i].left - last.left;
+                const dy = firstRects[i].top - last.top;
+                el.animate([
+                    { transform: `translate(${dx}px, ${dy}px)` },
+                    { transform: 'translate(0, 0)' }
+                ], { duration: durMs, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+            });
+        }
+        function updateCase06(dur, rad) {
+            if (dur !== null) {
+                STATE['06'].dur = Number(dur);
+                document.getElementById('val-06-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+            if (rad !== null) {
+                STATE['06'].rad = Number(rad);
+                document.querySelectorAll('.grid-item-06').forEach(el => el.style.borderRadius = `${rad}px`);
+                document.getElementById('val-06-rad').innerText = `${rad}px`;
+            }
+        }
+
+        // 07 Info Slide-Up
+        function updateCase07(dur, alpha) {
+            const card = document.getElementById('slideup-card-07');
+            if (dur !== null) {
+                STATE['07'].dur = Number(dur);
+                card.style.setProperty('--slide-dur', `${dur}s`);
+                document.getElementById('val-07-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+            if (alpha !== null) {
+                STATE['07'].alpha = Number(alpha);
+                card.style.setProperty('--mask-alpha', (alpha / 100).toFixed(2));
+                document.getElementById('val-07-alpha').innerText = `${alpha}%`;
+            }
+        }
+
+        // 08 Card Expand (FLIP)
+        function updateCase08(dur, blur) {
+            if (dur !== null) {
+                STATE['08'].dur = Number(dur);
+                document.getElementById('val-08-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+            if (blur !== null) {
+                STATE['08'].blur = Number(blur);
+                document.getElementById('flip-backdrop-08').style.backdropFilter = `blur(${blur}px)`;
+                document.getElementById('val-08-blur').innerText = `${blur}px`;
+            }
+        }
+        function openFlip08() {
+            const src = document.getElementById('flip-src-08');
+            const bd = document.getElementById('flip-backdrop-08');
+            const dest = document.getElementById('flip-dest-08');
+            const first = src.getBoundingClientRect();
+            bd.classList.remove('hidden');
+            bd.classList.add('flex');
+            const last = dest.getBoundingClientRect();
+            const dx = (first.left + first.width / 2) - (last.left + last.width / 2);
+            const dy = (first.top + first.height / 2) - (last.top + last.height / 2);
+            dest.animate([
+                { transform: `translate(${dx}px, ${dy}px) scale(${first.width / last.width}, ${first.height / last.height})`, opacity: 0.4 },
+                { transform: 'translate(0, 0) scale(1, 1)', opacity: 1 }
+            ], { duration: STATE['08'].dur * 1000, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+        }
+        function closeFlip08() {
+            const src = document.getElementById('flip-src-08');
+            const bd = document.getElementById('flip-backdrop-08');
+            const dest = document.getElementById('flip-dest-08');
+            const first = src.getBoundingClientRect();
+            const last = dest.getBoundingClientRect();
+            const dx = (first.left + first.width / 2) - (last.left + last.width / 2);
+            const dy = (first.top + first.height / 2) - (last.top + last.height / 2);
+            const anim = dest.animate([
+                { transform: 'translate(0, 0) scale(1, 1)', opacity: 1 },
+                { transform: `translate(${dx}px, ${dy}px) scale(${first.width / last.width}, ${first.height / last.height})`, opacity: 0 }
+            ], { duration: STATE['08'].dur * 800, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' });
+            anim.onfinish = () => {
+                bd.classList.add('hidden');
+                bd.classList.remove('flex');
+            };
+        }
+
+        // 09 Drag Reorder
+        function updateCase09(scale, dur) {
+            if (scale !== null) {
+                STATE['09'].scale = Number(scale);
+                document.getElementById('val-09-scale').innerText = `${Number(scale).toFixed(2)}x`;
+            }
+            if (dur !== null) {
+                STATE['09'].dur = Number(dur);
+                document.getElementById('val-09-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+        }
+        (function initSort09() {
+            const grid = document.getElementById('sort-grid-09');
+            let dragging = null;
+
+            grid.querySelectorAll('.sort-card-09').forEach(card => {
+                card.addEventListener('pointerdown', e => {
+                    dragging = card;
+                    dragging.style.transform = `scale(${STATE['09'].scale})`;
+                    dragging.style.boxShadow = '0 18px 32px -8px rgba(26, 25, 23, 0.22)';
+                    dragging.style.borderColor = '#1A1917';
+                    dragging.style.zIndex = '20';
+                    dragging.setPointerCapture(e.pointerId);
+                });
+
+                card.addEventListener('pointermove', e => {
+                    if (!dragging) return;
+                    dragging.style.pointerEvents = 'none';
+                    const over = document.elementFromPoint(e.clientX, e.clientY);
+                    dragging.style.pointerEvents = '';
+                    const target = over ? over.closest('.sort-card-09') : null;
+
+                    if (target && target !== dragging && target.parentNode === grid) {
+                        const siblings = Array.from(grid.children);
+                        const firstRects = siblings.map(el => el.getBoundingClientRect());
+                        const dIdx = siblings.indexOf(dragging);
+                        const tIdx = siblings.indexOf(target);
+                        grid.insertBefore(dragging, dIdx < tIdx ? target.nextSibling : target);
+
+                        siblings.forEach((el, i) => {
+                            if (el === dragging) return;
+                            const last = el.getBoundingClientRect();
+                            el.animate([
+                                { transform: `translate(${firstRects[i].left - last.left}px, ${firstRects[i].top - last.top}px)` },
+                                { transform: 'translate(0, 0)' }
+                            ], { duration: STATE['09'].dur * 1000, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+                        });
+                    }
+                });
+
+                const release = () => {
+                    if (!dragging) return;
+                    dragging.style.transform = '';
+                    dragging.style.boxShadow = '';
+                    dragging.style.borderColor = '';
+                    dragging.style.zIndex = '';
+                    dragging = null;
+                };
+                card.addEventListener('pointerup', release);
+                card.addEventListener('pointercancel', release);
+            });
+        })();
+
+        // 10 Focus Dim
+        function updateCase10(op, sc) {
+            const grid = document.getElementById('focus-grid-10');
+            if (op !== null) {
+                STATE['10'].op = Number(op);
+                grid.style.setProperty('--dim-opacity', op);
+                document.getElementById('val-10-op').innerText = Number(op).toFixed(2);
+            }
+            if (sc !== null) {
+                STATE['10'].sc = Number(sc);
+                grid.style.setProperty('--dim-scale', sc);
+                document.getElementById('val-10-sc').innerText = Number(sc).toFixed(2);
+            }
+        }
+
+        // 11 Spotlight Border Glow (Colour Picker + Hex Input)
+        function hexToRgbStr(hex) {
+            const clean = hex.replace('#', '');
+            const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+            const num = parseInt(full, 16);
+            return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
+        }
+        function applySpotHex11(hex) {
+            const upper = hex.toUpperCase();
+            const rgb = hexToRgbStr(upper);
+            STATE['11'].hex = upper;
+            STATE['11'].rgb = rgb;
+            document.getElementById('spotlight-grid-11').style.setProperty('--spot-rgb', rgb);
+            document.getElementById('val-11-color').innerText = upper;
+            document.getElementById('picker-11').value = upper;
+            document.getElementById('hex-input-11').value = upper;
+        }
+        function onColorPicker11(val) {
+            applySpotHex11(val);
+        }
+        function onHexInput11(input) {
+            let v = input.value.trim();
+            if (!v.startsWith('#')) v = '#' + v;
+            if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(v)) {
+                const full = v.length === 4 ? '#' + v.slice(1).split('').map(c => c + c).join('') : v;
+                applySpotHex11(full);
+            }
+        }
+        function onHexBlur11(input) {
+            input.value = STATE['11'].hex;
+        }
+        function updateCase11(rad, intensity) {
+            const grid = document.getElementById('spotlight-grid-11');
+            if (rad !== null) {
+                STATE['11'].rad = Number(rad);
+                grid.style.setProperty('--spot-radius', `${rad}px`);
+                document.getElementById('val-11-rad').innerText = `${rad}px`;
+            }
+            if (intensity !== null) {
+                STATE['11'].intensity = Number(intensity);
+                grid.style.setProperty('--spot-intensity', (intensity / 100).toFixed(2));
+                document.getElementById('val-11-int').innerText = `${intensity}%`;
+            }
+        }
+        (function initSpotlight11() {
+            const arena = document.getElementById('spotlight-arena-11');
+            const cards = document.querySelectorAll('#spotlight-grid-11 .spot-card');
+            arena.addEventListener('pointermove', e => {
+                cards.forEach(card => {
+                    const r = card.getBoundingClientRect();
+                    card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+                    card.style.setProperty('--my', `${e.clientY - r.top}px`);
+                });
+            });
+            arena.addEventListener('pointerleave', () => {
+                cards.forEach(card => {
+                    card.style.setProperty('--mx', '-999px');
+                    card.style.setProperty('--my', '-999px');
+                });
+            });
+        })();
+
+        // 12 3D Card Flip
+        function setFlipAxis12(axis) {
+            STATE['12'].axis = axis;
+            const stage = document.getElementById('flip3d-stage-12');
+            const back = document.getElementById('flip3d-back-face');
+            document.getElementById('val-12-axis').innerText = axis === 'y' ? 'Horizontal Y' : 'Vertical X';
+            document.getElementById('btn-axis-y').className = axis === 'y' ? 'px-2.5 py-0.5 rounded bg-[#1A1917] text-[#FAF9F6] text-[11px] cursor-pointer' : 'px-2.5 py-0.5 rounded text-[#6E6C65] text-[11px] cursor-pointer';
+            document.getElementById('btn-axis-x').className = axis === 'x' ? 'px-2.5 py-0.5 rounded bg-[#1A1917] text-[#FAF9F6] text-[11px] cursor-pointer' : 'px-2.5 py-0.5 rounded text-[#6E6C65] text-[11px] cursor-pointer';
+
+            if (axis === 'y') {
+                stage.classList.remove('axis-x');
+                stage.classList.add('axis-y');
+                back.classList.remove('flip3d-back-x');
+                back.classList.add('flip3d-back-y');
+            } else {
+                stage.classList.remove('axis-y');
+                stage.classList.add('axis-x');
+                back.classList.remove('flip3d-back-y');
+                back.classList.add('flip3d-back-x');
+            }
+        }
+        function updateCase12(dur, persp) {
+            const stage = document.getElementById('flip3d-stage-12');
+            if (dur !== null) {
+                STATE['12'].dur = Number(dur);
+                stage.style.setProperty('--flip-dur', `${dur}s`);
+                document.getElementById('val-12-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+            if (persp !== null) {
+                STATE['12'].persp = Number(persp);
+                stage.style.perspective = `${persp}px`;
+                document.getElementById('val-12-persp').innerText = `${persp}px`;
+            }
+        }
+
+        // 13 Coverflow Carousel
+        let cfTarget13 = 2;
+        let cfCurrent13 = 2;
+        let cfDragging13 = false;
+        let cfStartX13 = 0;
+        let cfStartPos13 = 2;
+        let cfMoved13 = false;
+        let cfAutoTimer13 = null;
+        let cfCardEls13 = [];
+
+        const CF_DATA = [
+            { num: '01', name: 'ARCHIVE I' },
+            { num: '02', name: 'ARCHIVE II' },
+            { num: '03', name: 'CORE STUDIO' },
+            { num: '04', name: 'ARCHIVE IV' },
+            { num: '05', name: 'ARCHIVE V' }
+        ];
+
+        function initCoverflow13() {
+            const stage = document.getElementById('coverflow-stage-13');
+            stage.innerHTML = '';
+            cfCardEls13 = CF_DATA.map((item, idx) => {
+                const el = document.createElement('div');
+                el.className = 'coverflow-item rounded-2xl p-4 flex flex-col justify-between cursor-pointer border bg-[#FAF9F6] text-[#1A1917] border-[#E4E1D8] shadow-sm';
+                el.innerHTML = `
+                    <span class="text-[11px] font-mono opacity-60">${item.num}</span>
+                    <div>
+                        <div class="text-sm font-extrabold tracking-tight">${item.name}</div>
+                        <div class="cf-status text-[10px] font-mono opacity-60 mt-0.5">SLIDE</div>
+                    </div>
+                `;
+                el.addEventListener('click', () => {
+                    if (!cfMoved13) {
+                        cfTarget13 = idx;
+                    }
+                });
+                stage.appendChild(el);
+                return el;
+            });
+
+            stage.addEventListener('pointerdown', e => {
+                cfDragging13 = true;
+                cfMoved13 = false;
+                cfStartX13 = e.clientX;
+                cfStartPos13 = cfCurrent13;
+                if (cfAutoTimer13) {
+                    toggleAutoSlide13(false);
+                }
+            });
+
+            window.addEventListener('pointermove', e => {
+                if (!cfDragging13) return;
+                const dx = e.clientX - cfStartX13;
+                if (Math.abs(dx) > 5) cfMoved13 = true;
+                const raw = cfStartPos13 - dx / 135;
+                if (raw < 0) {
+                    cfTarget13 = raw * 0.3;
+                } else if (raw > CF_DATA.length - 1) {
+                    cfTarget13 = (CF_DATA.length - 1) + (raw - (CF_DATA.length - 1)) * 0.3;
+                } else {
+                    cfTarget13 = raw;
+                }
+            });
+
+            window.addEventListener('pointerup', () => {
+                if (!cfDragging13) return;
+                cfDragging13 = false;
+                cfTarget13 = Math.max(0, Math.min(CF_DATA.length - 1, Math.round(cfTarget13)));
+            });
+
+            function animateCoverflow13() {
+                const ease = cfDragging13 ? 0.35 : 0.14;
+                cfCurrent13 += (cfTarget13 - cfCurrent13) * ease;
+                if (Math.abs(cfTarget13 - cfCurrent13) < 0.0005) {
+                    cfCurrent13 = cfTarget13;
+                }
+
+                const activeNearest = Math.max(0, Math.min(CF_DATA.length - 1, Math.round(cfCurrent13)));
+                const idxLabel = document.getElementById('coverflow-idx-13');
+                if (idxLabel) idxLabel.innerText = `0${activeNearest + 1} / 05`;
+
+                const maxDeg = STATE['13'].deg;
+                const zDepth = STATE['13'].z;
+
+                cfCardEls13.forEach((el, idx) => {
+                    const offset = idx - cfCurrent13;
+                    const absOff = Math.abs(offset);
+                    const clamped = Math.max(-1, Math.min(1, offset));
+                    const rot = -Math.sin(clamped * (Math.PI / 2)) * maxDeg;
+                    const tx = offset * 124;
+                    const tz = 48 - Math.min(absOff, 1) * (48 + zDepth) - Math.max(0, absOff - 1) * (zDepth * 0.55);
+                    const scale = 1 - Math.min(absOff, 1.5) * 0.06;
+
+                    el.style.transform = `translate3d(${tx.toFixed(1)}px, 0, ${tz.toFixed(1)}px) rotateY(${rot.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
+                    el.style.zIndex = Math.round(30 - absOff * 5);
+                    el.style.opacity = absOff > 2.4 ? 0 : Math.max(0.45, 1 - absOff * 0.22).toFixed(2);
+
+                    const isCenter = absOff < 0.35;
+                    if (isCenter) {
+                        el.style.backgroundColor = '#1A1917';
+                        el.style.color = '#FAF9F6';
+                        el.style.borderColor = '#1A1917';
+                        el.style.boxShadow = '0 20px 36px -10px rgba(26, 25, 23, 0.28)';
+                        el.querySelector('.cf-status').innerText = 'ACTIVE';
+                    } else {
+                        el.style.backgroundColor = '#FAF9F6';
+                        el.style.color = '#1A1917';
+                        el.style.borderColor = '#E4E1D8';
+                        el.style.boxShadow = '0 4px 12px -2px rgba(26, 25, 23, 0.06)';
+                        el.querySelector('.cf-status').innerText = 'SLIDE';
+                    }
+                });
+
+                requestAnimationFrame(animateCoverflow13);
+            }
+            requestAnimationFrame(animateCoverflow13);
+        }
+
+        function stepCoverflow13(d) {
+            const base = Math.round(cfTarget13);
+            cfTarget13 = (base + d + CF_DATA.length) % CF_DATA.length;
+        }
+
+        function toggleAutoSlide13(forceState) {
+            const btn = document.getElementById('auto-slide-btn-13');
+            const shouldRun = forceState !== undefined ? forceState : !cfAutoTimer13;
+            if (shouldRun) {
+                if (cfAutoTimer13) clearInterval(cfAutoTimer13);
+                cfAutoTimer13 = setInterval(() => {
+                    stepCoverflow13(1);
+                }, 1800);
+                btn.innerText = '⏸ Stop Slide';
+                btn.classList.add('bg-[#1A1917]', 'text-[#FAF9F6]', 'border-[#1A1917]');
+                btn.classList.remove('bg-[#FAF9F6]', 'text-[#1A1917]');
+            } else {
+                clearInterval(cfAutoTimer13);
+                cfAutoTimer13 = null;
+                btn.innerText = '▶ Auto Slide';
+                btn.classList.remove('bg-[#1A1917]', 'text-[#FAF9F6]', 'border-[#1A1917]');
+                btn.classList.add('bg-[#FAF9F6]', 'text-[#1A1917]');
+            }
+        }
+
+        function updateCase13(deg, z) {
+            if (deg !== null) {
+                STATE['13'].deg = Number(deg);
+                document.getElementById('val-13-deg').innerText = `${deg}°`;
+            }
+            if (z !== null) {
+                STATE['13'].z = Number(z);
+                document.getElementById('val-13-z').innerText = `${z}px`;
+            }
+        }
+
+        // 14 Pricing Toggle
+        let yearly14 = false;
+        function toggleBilling14() {
+            yearly14 = !yearly14;
+            document.getElementById('dot-14').style.transform = yearly14 ? 'translateX(24px)' : 'translateX(0)';
+            document.getElementById('lbl-m-14').className = yearly14 ? 'text-xs font-medium text-[#6E6C65]' : 'text-xs font-bold text-[#1A1917]';
+            document.getElementById('lbl-y-14').className = yearly14 ? 'text-xs font-bold text-[#1A1917]' : 'text-xs font-medium text-[#6E6C65]';
+            const offset = yearly14 ? 'translateY(-2.5rem)' : 'translateY(0)';
+            document.getElementById('strip-a-14').style.transform = offset;
+            document.getElementById('strip-b-14').style.transform = offset;
+        }
+        function updateCase14(dur, sc) {
+            if (dur !== null) {
+                STATE['14'].dur = Number(dur);
+                document.getElementById('pricing-stage-14').style.setProperty('--roll-dur', `${dur}s`);
+                document.getElementById('val-14-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+            if (sc !== null) {
+                STATE['14'].sc = Number(sc);
+                document.getElementById('pricing-stage-14').style.setProperty('--pro-scale', sc);
+                document.getElementById('val-14-sc').innerText = `${Number(sc).toFixed(2)}x`;
+            }
+        }
+
+        // 15 Staggered Character Reveal
+        function playStagger15() {
+            const el = document.getElementById('stagger-text-15');
+            const text = 'Design in Motion';
+            el.innerHTML = '';
+            text.split('').forEach((ch, i) => {
+                const s = document.createElement('span');
+                s.className = 'stagger-char';
+                s.style.setProperty('--stagger-y', `${STATE['15'].y}px`);
+                s.style.transitionDelay = `${i * STATE['15'].delay}ms`;
+                s.innerHTML = ch === ' ' ? '&nbsp;' : ch;
+                el.appendChild(s);
+            });
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                el.querySelectorAll('.stagger-char').forEach(s => s.classList.add('active'));
+            }));
+        }
+        function updateCase15(delay, y) {
+            if (delay !== null) {
+                STATE['15'].delay = Number(delay);
+                document.getElementById('val-15-delay').innerText = `${delay}ms`;
+            }
+            if (y !== null) {
+                STATE['15'].y = Number(y);
+                document.getElementById('val-15-y').innerText = `${y}px`;
+            }
+            playStagger15();
+        }
+
+        // 16 Kinetic Weight Wave
+        function updateCase16(rad, sp) {
+            if (rad !== null) {
+                STATE['16'].rad = Number(rad);
+                document.getElementById('val-16-rad').innerText = `${rad}px`;
+            }
+            if (sp !== null) {
+                STATE['16'].sp = Number(sp);
+                document.getElementById('val-16-sp').innerText = `${sp}px`;
+            }
+        }
+        (function initKinetic16() {
+            const word = document.getElementById('kinetic-word-16');
+            const arena = document.getElementById('kinetic-arena-16');
+            'KINETIC'.split('').forEach(ch => {
+                const span = document.createElement('span');
+                span.innerText = ch;
+                span.style.fontWeight = '400';
+                span.style.display = 'inline-block';
+                span.style.transition = 'transform 0.12s ease-out, margin 0.12s ease-out';
+                word.appendChild(span);
+            });
+            const chars = Array.from(word.children);
+            arena.addEventListener('pointermove', e => {
+                const rad = STATE['16'].rad;
+                const maxSp = STATE['16'].sp;
+                chars.forEach(c => {
+                    const r = c.getBoundingClientRect();
+                    const dist = Math.abs(e.clientX - (r.left + r.width / 2));
+                    const inf = Math.max(0, 1 - dist / rad);
+                    c.style.fontWeight = Math.round(400 + inf * 500);
+                    c.style.transform = `scale(${(1 + inf * 0.28).toFixed(2)})`;
+                    c.style.margin = `0 ${(inf * maxSp).toFixed(1)}px`;
+                });
+            });
+            arena.addEventListener('pointerleave', () => {
+                chars.forEach(c => {
+                    c.style.fontWeight = '400';
+                    c.style.transform = 'scale(1)';
+                    c.style.margin = '0px';
+                });
+            });
+        })();
+
+        // 17 Scroll Focus Reading
+        function updateCase17(dur, op) {
+            if (dur !== null) {
+                STATE['17'].dur = Number(dur);
+                document.querySelectorAll('.scroll-line-17').forEach(l => l.style.transitionDuration = `${dur}s`);
+                document.getElementById('val-17-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+            if (op !== null) {
+                STATE['17'].op = Number(op);
+                document.getElementById('val-17-op').innerText = Number(op).toFixed(2);
+                refreshScroll17();
+            }
+        }
+        function refreshScroll17() {
+            const box = document.getElementById('scroll-box-17');
+            const boxRect = box.getBoundingClientRect();
+            const center = boxRect.top + boxRect.height * 0.42;
+            document.querySelectorAll('.scroll-line-17').forEach(line => {
+                const r = line.getBoundingClientRect();
+                const dist = Math.abs((r.top + r.height / 2) - center);
+                line.style.opacity = dist < 46 ? '1' : String(STATE['17'].op);
+            });
+        }
+        document.getElementById('scroll-box-17').addEventListener('scroll', refreshScroll17, { passive: true });
+
+        // 18 Magnetic Button
+        function updateCase18(pull, rad) {
+            if (pull !== null) {
+                STATE['18'].pull = Number(pull);
+                document.getElementById('val-18-pull').innerText = Number(pull).toFixed(2);
+            }
+            if (rad !== null) {
+                STATE['18'].rad = Number(rad);
+                document.getElementById('val-18-rad').innerText = `${rad}px`;
+            }
+        }
+        (function initMag18() {
+            const arena = document.getElementById('mag-arena-18');
+            const btn = document.getElementById('mag-btn-18');
+            const lbl = document.getElementById('mag-label-18');
+            let tx = 0, ty = 0, cx = 0, cy = 0;
+
+            arena.addEventListener('pointermove', e => {
+                const r = btn.getBoundingClientRect();
+                const dx = e.clientX - (r.left + r.width / 2);
+                const dy = e.clientY - (r.top + r.height / 2);
+                if (Math.hypot(dx, dy) < STATE['18'].rad) {
+                    tx = dx * STATE['18'].pull;
+                    ty = dy * STATE['18'].pull;
+                } else {
+                    tx = 0; ty = 0;
+                }
+            });
+            arena.addEventListener('pointerleave', () => { tx = 0; ty = 0; });
+
+            function loop() {
+                cx += (tx - cx) * 0.16;
+                cy += (ty - cy) * 0.16;
+                btn.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0)`;
+                lbl.style.transform = `translate3d(${(cx * 0.25).toFixed(1)}px, ${(cy * 0.25).toFixed(1)}px, 0)`;
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+
+        // 19 Tactile Press & Ripple
+        function updateCase19(sc, ten) {
+            if (sc !== null) {
+                STATE['19'].sc = Number(sc);
+                document.getElementById('val-19-sc').innerText = Number(sc).toFixed(2);
+            }
+            if (ten !== null) {
+                STATE['19'].ten = ten;
+                const map = { low: 'Soft Damping', med: 'Medium Overshoot', high: 'Snappy Rebound' };
+                document.getElementById('val-19-ten').innerText = map[ten];
+                ['low', 'med', 'high'].forEach(k => {
+                    document.getElementById(`ten-${k}`).className = k === ten
+                        ? 'px-2.5 py-0.5 rounded bg-[#1A1917] text-[#FAF9F6] text-[11px] cursor-pointer'
+                        : 'px-2.5 py-0.5 rounded text-[#6E6C65] text-[11px] cursor-pointer';
+                });
+            }
+        }
+        function triggerPress19(e, btn) {
+            const wave = document.createElement('span');
+            const d = Math.max(btn.clientWidth, btn.clientHeight);
+            const r = btn.getBoundingClientRect();
+            wave.style.width = wave.style.height = `${d}px`;
+            wave.style.left = `${e.clientX - r.left - d / 2}px`;
+            wave.style.top = `${e.clientY - r.top - d / 2}px`;
+            wave.className = 'ripple-wave';
+            btn.appendChild(wave);
+            setTimeout(() => wave.remove(), 650);
+
+            const curves = {
+                low: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                med: 'cubic-bezier(0.34, 1.65, 0.64, 1)',
+                high: 'cubic-bezier(0.34, 2.35, 0.55, 1)'
+            };
+            btn.animate([
+                { transform: `scale(${STATE['19'].sc})` },
+                { transform: 'scale(1)' }
+            ], { duration: 480, easing: curves[STATE['19'].ten] });
+        }
+
+        // 20 State Morph Button
+        function updateCase20(dur, wait) {
+            if (dur !== null) {
+                STATE['20'].dur = Number(dur);
+                document.getElementById('morph-btn-20').style.transitionDuration = `${dur}s`;
+                document.getElementById('val-20-dur').innerText = `${Number(dur).toFixed(2)}s`;
+            }
+            if (wait !== null) {
+                STATE['20'].wait = Number(wait);
+                document.getElementById('val-20-wait').innerText = `${Number(wait).toFixed(1)}s`;
+            }
+        }
+        let busy20 = false;
+        function triggerMorph20() {
+            if (busy20) return;
+            busy20 = true;
+            const btn = document.getElementById('morph-btn-20');
+            btn.className = 'h-12 w-12 rounded-full bg-[#1A1917] text-[#FAF9F6] flex items-center justify-center transition-all';
+            btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
+
+            setTimeout(() => {
+                btn.className = 'h-12 px-7 rounded-full bg-[#166534] text-[#FAF9F6] font-semibold text-sm flex items-center justify-center gap-1.5 transition-all';
+                btn.innerHTML = `<span>✓ Submitted</span>`;
+                setTimeout(() => {
+                    btn.className = 'h-12 px-8 rounded-full bg-[#1A1917] text-[#FAF9F6] font-semibold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm';
+                    btn.innerHTML = `<span>Submit Prototype</span>`;
+                    busy20 = false;
+                }, 1400);
+            }, STATE['20'].wait * 1000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            moveNavPill(document.querySelector('.nav-btn[data-tab="cards"]'));
+            initCoverflow13();
+        });
+        window.addEventListener('resize', () => {
+            const active = document.querySelector('.nav-btn.text-\\[\\#FAF9F6\\]');
+            if (active) moveNavPill(active);
+        });
+    </script>
+</body>
+</html>
